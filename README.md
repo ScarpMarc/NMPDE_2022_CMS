@@ -1,4 +1,4 @@
-# NMPDE_2022_CMS
+# NMPDE Project - Cabiati, Muscarnera, Scarpelli
 Numerical Methods for Partial Differential Equations Project by Cabiati, Muscarnera and Scarpelli. Academic Year 2022-2023
 
 # Description 
