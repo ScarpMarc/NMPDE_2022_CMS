@@ -1,11 +1,11 @@
 #!/bin/bash
 #PBS -S /bin/bash
 
-#PBS -l nodes=3:ppn=20,walltime=0:30:00 -q gigat
+#PBS -l nodes=2:ppn=20,walltime=0:30:00 -q gigat
 #PBS -N stokes_ptero_build_cms
 
 source /u/par3/.bashrc
 
 cd /u/par3/repos/NMPDE_2022_CMS/build
 #sort ${PBS_NODEFILE} | uniq -c | awk '{ printf("%s\n", $2); }' > mpd.nodes
-time mpirun -machinefile mpd.nodes -n 3 -npernode 20 ./lab-09 > /scratch/hpc/par3/out.txt 2>&1
+time mpirun -machinefile mpd.nodes -n 2 -npernode 20 ./lab-09 > /scratch/hpc/par3/out.txt 2>&1
