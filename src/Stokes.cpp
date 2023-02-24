@@ -366,7 +366,7 @@ Stokes::output()
 
   data_out.build_patches();
 
-  const std::string output_file_name = "output-" + std::to_string(N);
+  const std::string output_file_name = "/scratch/hpc/par3/results/output-" + std::to_string(N);
 
   DataOutBase::DataOutFilter data_filter(
     DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
