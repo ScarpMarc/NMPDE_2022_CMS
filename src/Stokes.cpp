@@ -318,7 +318,7 @@ Stokes::solve()
 
   //deallog.attach(std::cout);
 
-  SolverControl solver_control(20000, 1e-6 * system_rhs.l2_norm()/*, true*/);
+  SolverControl solver_control(20000, 1e-4 * system_rhs.l2_norm()/*, true*/);
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
@@ -326,7 +326,7 @@ Stokes::solve()
   // preconditioner.initialize(system_matrix.block(0, 0),
   //                           pressure_mass.block(1, 1));
 
-  PreconditionBlockTriangular preconditioner;
+  PreconditionBlockDiagonal preconditioner;
   preconditioner.initialize(system_matrix.block(0, 0),
                             pressure_mass.block(1, 1),
                             system_matrix.block(1, 0));
