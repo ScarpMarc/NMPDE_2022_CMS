@@ -316,7 +316,9 @@ Stokes::solve()
 {
   pcout << "===============================================" << std::endl;
 
-  SolverControl solver_control(2000, 3e-5 * system_rhs.l2_norm());
+  deallog.attach(std::cout);
+
+  SolverControl solver_control(20000, 1e-6 * system_rhs.l2_norm(), true);
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
