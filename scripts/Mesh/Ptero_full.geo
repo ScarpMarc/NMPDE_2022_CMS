@@ -56,20 +56,20 @@ Physical Volume("SimulationField") = {3};
 
 // Mesh
 
-sampling_rate = 2;
+sampling_rate = 4;
 Mesh.CharacteristicLengthFromCurvature = 1;
 Mesh.MinimumElementsPerTwoPi = 10;
 Field[1] = Distance;
 Field[1].SurfacesList = {1:798};
-Field[1].Sampling = 100;
+Field[1].Sampling = 1;
 Field[2] = Threshold;
 Field[2].InField = 1;
-Field[2].SizeMin = sampling_rate / 50;
+Field[2].SizeMin = sampling_rate / 40;
 Field[2].SizeMax = sampling_rate;
-Field[2].DistMin = 1;
-Field[2].DistMax = 15;
+Field[2].DistMin = .0001;
+Field[2].DistMax = .003;
 Field[3] = MathEval;
-Field[3].F = Sprintf("F1^3 + %g", sampling_rate / 60);
+Field[3].F = Sprintf("F1^3 + %g", sampling_rate / 100);
 Field[7] = Min;
 Field[7].FieldsList = {2, 3};
 Background Field = 7;
@@ -90,7 +90,7 @@ Mesh(3);
 /*
 Optimize the current mesh with the given algorithm (currently "Gmsh" for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
 */
-OptimizeMesh "Netgen";
+//OptimizeMesh "Gmsh";
 
 Save "ptero.msh";
 
