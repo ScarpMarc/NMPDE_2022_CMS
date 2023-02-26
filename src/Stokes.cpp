@@ -14,7 +14,7 @@ Stokes::setup()
 
     /*const std::string mesh_file_name =
       "../mesh/mesh-step-" + std::to_string(N + 1) + ".msh";*/
-    const std::string mesh_file_name = "../mesh/Ptero_full.msh";
+    const std::string mesh_file_name = "../mesh/Ptero_reduced_x2.msh";
 
     std::ifstream grid_in_file(mesh_file_name);
     grid_in.read_msh(grid_in_file);
