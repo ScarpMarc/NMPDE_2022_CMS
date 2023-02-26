@@ -33,7 +33,7 @@ Merge "half_ptero_reducedx2.stp" ;//+
 Surface Loop(1) = Surface{:};
 Volume(1) = {1};
 //Physical Volume("PteroBody") = {1};
-Physical Surface("PteroSurface") = {1:798}; // 798 for reduced mesh
+Physical Surface("PteroSurface") = {6:870}; // 798 for reduced mesh
 
 BoundingBox;
 bb() = BoundingBox Volume {1};
@@ -47,10 +47,10 @@ zmax = bb(5) * 1.5;//3.5;
 
 Box(2) = {xmin,ymin,zmin, xmax-xmin,ymax-ymin,zmax-zmin};
 
-Physical Surface("Inlet") = {801};
-Physical Surface("Outlet") = {802};
-Physical Surface("SlipSurface") = {800};
-Physical Surface("Wall") = {799, 803, 804}; // 1 is the 
+Physical Surface("Inlet") = {2};
+Physical Surface("Outlet") = {4};
+Physical Surface("SlipSurface") = {6};
+Physical Surface("Wall") = {1, 3, 5}; // 1 is the 
 BooleanDifference(3) = { Volume{2}; Delete; }{ Volume{1}; Delete; };
 Physical Volume("SimulationField") = {3};
 
@@ -60,7 +60,7 @@ sampling_rate = 4;
 Mesh.CharacteristicLengthFromCurvature = 1;
 Mesh.MinimumElementsPerTwoPi = 10;
 Field[1] = Distance;
-Field[1].SurfacesList = {1:798};
+Field[1].SurfacesList = {6:870};
 Field[1].Sampling = 2;
 Field[2] = Threshold;
 Field[2].InField = 1;
