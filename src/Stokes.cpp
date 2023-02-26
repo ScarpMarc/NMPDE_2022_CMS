@@ -318,7 +318,7 @@ Stokes::solve()
 
   //deallog.attach(std::cout);
 
-  SolverControl solver_control(20000, 1e-6 * system_rhs.l2_norm()/*, true*/);
+  SolverControl solver_control(200000, 1e-6 * system_rhs.l2_norm()/*, true*/);
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
@@ -326,10 +326,10 @@ Stokes::solve()
   // preconditioner.initialize(system_matrix.block(0, 0),
   //                           pressure_mass.block(1, 1));
 
-  PreconditionBlockDiagonal preconditioner;
+  PreconditionBlockTriangular preconditioner;
   preconditioner.initialize(system_matrix.block(0, 0),
-                            pressure_mass.block(1, 1)/*,
-                            system_matrix.block(1, 0)*/);
+                            pressure_mass.block(1, 1),
+                            system_matrix.block(1, 0));
 
   pcout << "Solving the linear system" << std::endl;
   solver.solve(system_matrix, solution_owned, system_rhs, preconditioner);
@@ -368,7 +368,7 @@ Stokes::output()
 
   data_out.build_patches();
 
-  const std::string output_file_name = "/scratch/hpc/par3/results/output-" + std::to_string(N);
+  const std::string output_file_name = "output-" + std::to_string(N);
 
   DataOutBase::DataOutFilter data_filter(
     DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
