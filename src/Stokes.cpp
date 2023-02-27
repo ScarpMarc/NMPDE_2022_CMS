@@ -14,7 +14,7 @@ Stokes::setup()
 
     /*const std::string mesh_file_name =
       "../mesh/mesh-step-" + std::to_string(N + 1) + ".msh";*/
-    const std::string mesh_file_name = "../mesh/Ptero_reduced_x2.msh";
+    const std::string mesh_file_name = mesh_file_name_glob;
 
     std::ifstream grid_in_file(mesh_file_name);
     grid_in.read_msh(grid_in_file);
@@ -251,7 +251,7 @@ Stokes::assemble()
           for (unsigned int f = 0; f < cell->n_faces(); ++f)
             {
               if (cell->face(f)->at_boundary() &&
-                  cell->face(f)->boundary_id() == 4)
+                  cell->face(f)->boundary_id() == 3)
                 {
                   fe_face_values.reinit(cell, f);
 
@@ -318,7 +318,7 @@ Stokes::solve()
 
   //deallog.attach(std::cout);
 
-  SolverControl solver_control(200000, 1e-6 * system_rhs.l2_norm()/*, true*/);
+  SolverControl solver_control(20000, 1e-6 * system_rhs.l2_norm()/*, true*/);
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
