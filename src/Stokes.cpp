@@ -245,13 +245,13 @@ Stokes::assemble()
             }
         }
 
-      // Boundary integral for Neumann BCs.
+      // Boundary integral for Neumann BCs.f
       if (cell->at_boundary())
         {
           for (unsigned int f = 0; f < cell->n_faces(); ++f)
             {
               if (cell->face(f)->at_boundary() &&
-                  cell->face(f)->boundary_id() == 3)
+                  cell->face(f)->boundary_id() == 4)
                 {
                   fe_face_values.reinit(cell, f);
 
