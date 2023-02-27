@@ -6,8 +6,9 @@
 
 source /u/par3/hpc.bashrc
 
-cp /u/par3/repos/NMPDE_2022_CMS/build /scratch/hpc/par3/build
-cp /u/par3/repos/NMPDE_2022_CMS/mesh /scratch/hpc/par3/mesh
+cp -R /u/par3/repos/NMPDE_2022_CMS/build /scratch/hpc/par3/build
+
+cp -R /u/par3/repos/NMPDE_2022_CMS/mesh /scratch/hpc/par3/mesh
 
 cd /scratch/hpc/par3/build
 sort ${PBS_NODEFILE} | uniq -c | awk '{ printf("%s\n", $2); }' > mpd.nodes
