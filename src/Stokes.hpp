@@ -34,6 +34,8 @@
 
 using namespace dealii;
 
+string mesh_file_name_glob;
+
 // Class implementing a solver for the Stokes problem.
 class Stokes
 {
@@ -85,7 +87,7 @@ public:
     virtual void
     vector_value(const Point<dim> &p, Vector<double> &values) const override
     {
-      values[1] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
+      values[1] = alpha;
 
       values[0] = 0.0;
       for (unsigned int i = 2; i < dim + 1; ++i)
@@ -96,13 +98,13 @@ public:
     value(const Point<dim> &p, const unsigned int component = 0) const override
     {
       if (component == 1)
-        return -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
+        return alpha;
       else
         return 0.0;
     }
 
   protected:
-    const double alpha = 1.0;
+    const double alpha = 10.0;
   };
 
   // Since we're working with block matrices, we need to make our own
