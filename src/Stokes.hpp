@@ -32,9 +32,11 @@
 #include <fstream>
 #include <iostream>
 
+#include <string>
+
 using namespace dealii;
 
-string mesh_file_name_glob;
+std::string mesh_file_name_glob;
 
 // Class implementing a solver for the Stokes problem.
 class Stokes
