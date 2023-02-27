@@ -36,7 +36,7 @@
 
 using namespace dealii;
 
-std::string mesh_file_name_glob;
+extern std::string mesh_file_name_glob;
 
 // Class implementing a solver for the Stokes problem.
 class Stokes
