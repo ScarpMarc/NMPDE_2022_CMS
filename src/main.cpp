@@ -16,7 +16,6 @@ SimulationSettings base_sym_settings = {
 // Main function.
 int main(int argc, char *argv[])
 {
-  Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv);
   SimulationSettings sym_settings = base_sym_settings;
 
   if (argc > 1)
@@ -47,6 +46,8 @@ int main(int argc, char *argv[])
   std::cout << "Max. solver iterations: " << sym_settings.max_solver_iteration_amt << std::endl;   // 5000,//unsigned int max_solver_iteration_amt;
   std::cout << "Desired solver precision: " << sym_settings.desired_solver_precision << std::endl; // 1e-6,//double desired_solver_precision;
   std::cout << "Theta for Theta Method: " << sym_settings.theta << std::endl;                      // 0.5//double theta;
+
+  Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv);
 
   Problem problem(sym_settings);
 
