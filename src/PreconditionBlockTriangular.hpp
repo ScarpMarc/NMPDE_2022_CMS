@@ -8,6 +8,8 @@
 #include <deal.II/lac/trilinos_precondition.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
 
+using namespace dealii;
+
 // Block-triangular preconditioner.
   class PreconditionBlockTriangular
   {

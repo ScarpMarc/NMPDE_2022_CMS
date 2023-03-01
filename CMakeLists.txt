@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12.0)
-project(lab01 LANGUAGES CXX C)
+project(PteroWindChamber LANGUAGES CXX C)
 
 include(common/cmake-common.cmake)
 
-add_executable(lab-09 src/lab-09.cpp src/Stokes.cpp)
-deal_ii_setup_target(lab-09)
+add_executable(Ptero src/main.cpp src/Problem.cpp)
+deal_ii_setup_target(Ptero)

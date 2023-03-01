@@ -83,8 +83,8 @@ public:
   class InletVelocity : public Function<dim>
   {
   public:
-    InletVelocity(const SimulationSettings &simulation_settings_)
-        : Function<dim>(dim + 1), components(simulation_settings_.inlet_velocity)
+    InletVelocity(const std::array<double, 3> &velocity)
+        : Function<dim>(dim + 1), components(velocity)
     {
     }
 
@@ -108,7 +108,7 @@ public:
     }
 
   protected:
-    const array<double, 3> components;
+    const std::array<double, 3> components;
   };
 
   // Since we're working with block matrices, we need to make our own
@@ -143,11 +143,10 @@ protected:
 
   // Preconditioner used for the pressure block.
   TrilinosWrappers::PreconditionILU preconditioner_pressure;
-};
 
 // Constructor.
 Problem(const SimulationSettings &simulation_settings)
-    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), simulation_settings(simulation_settings), inlet_velocity(simulation_settings.inlet_velocity) /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
+    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), simulation_settings(simulation_settings), inlet_velocity(simulation_settings.inlet_velocity), degree_velocity(simulation_settings.degree_velocity), degree_pressure(simulation_settings.degree_pressure), /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
 {
 }
 
@@ -243,7 +242,6 @@ TrilinosWrappers::MPI::BlockVector solution_owned;
 
 // System solution (including ghost elements).
 TrilinosWrappers::MPI::BlockVector solution;
-}
-;
+};
 
 #endif
