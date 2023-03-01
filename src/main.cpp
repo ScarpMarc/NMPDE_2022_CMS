@@ -2,7 +2,7 @@
 #include "SimulationSettings.hpp"
 
 SimulationSettings base_sym_settings = {
-    "half_ptero_reducedx2.msh", // std::string file_name;
+    "Ptero_reducedx2.msh", // std::string file_name;
     2,                          // unsigned int degree_velocity;
     1,                          // unsigned int degree_pressure;
     1.0,                        // double coeff_nu;
