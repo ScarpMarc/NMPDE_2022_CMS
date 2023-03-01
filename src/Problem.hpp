@@ -127,22 +127,7 @@ public:
     {
       dst = src;
     }
-
-  protected:
   };
-
-protected:
-  // Velocity stiffness matrix.
-  const TrilinosWrappers::SparseMatrix *velocity_stiffness;
-
-  // Preconditioner used for the velocity block.
-  TrilinosWrappers::PreconditionILU preconditioner_velocity;
-
-  // Pressure mass matrix.
-  const TrilinosWrappers::SparseMatrix *pressure_mass;
-
-  // Preconditioner used for the pressure block.
-  TrilinosWrappers::PreconditionILU preconditioner_pressure;
 
 // Constructor.
 Problem(const SimulationSettings &simulation_settings)
