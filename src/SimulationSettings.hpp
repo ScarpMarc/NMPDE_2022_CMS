@@ -4,20 +4,37 @@
 #include <string>
 #include <array>
 
-struct SimulationSettings
+namespace ns_sym_settings
 {
-    std::string file_name;
-    unsigned int degree_velocity;
-    unsigned int degree_pressure;
+    struct SimulationSettings
+    {
+        std::string file_name;
+        unsigned int degree_velocity;
+        unsigned int degree_pressure;
 
-    double coeff_nu;
-    std::array<double, 3> inlet_velocity;
-    double outlet_pressure;
+        double coeff_nu;
+        std::array<double, 3> inlet_velocity;
+        double outlet_pressure;
 
-    unsigned int max_solver_iteration_amt;
-    double desired_solver_precision;
+        unsigned int max_solver_iteration_amt;
+        double desired_solver_precision;
 
-    double theta;
-};
+        double theta;
+    };
 
-#endif  
+    const SimulationSettings base_sim_settings = {
+        "Ptero_reduced_x2.msh", // std::string file_name;
+        2,                      // unsigned int degree_velocity;
+        1,                      // unsigned int degree_pressure;
+        1.0,                    // double coeff_nu;
+        {0.0, 10.0, 0.0},       // std::array<double, 3> inlet_velocity;
+        10.0,                   // double outlet_pressure;
+        5000,                   // unsigned int max_solver_iteration_amt;
+        1e-6,                   // double desired_solver_precision;
+        0.5                     // double theta;
+    };
+
+    void print_simulation_settings(const SimulationSettings &sim_settings);
+}
+
+#endif
