@@ -20,6 +20,9 @@ namespace ns_sim_settings
         double desired_solver_precision;
 
         double theta;
+
+        unsigned long total_time_steps;
+        unsigned long time_steps_per_second;
     };
 
     const SimulationSettings base_sim_settings = {
@@ -31,7 +34,9 @@ namespace ns_sim_settings
         10.0,                   // double outlet_pressure;
         5000,                   // unsigned int max_solver_iteration_amt;
         1e-6,                   // double desired_solver_precision;
-        0.5                     // double theta;
+        0.5,                    // double theta;
+        100,                    // unsigned long total_time_steps;
+        10                      // double seconds_per_time_steps;
     };
 
     void print_simulation_settings(const SimulationSettings &sim_settings);
