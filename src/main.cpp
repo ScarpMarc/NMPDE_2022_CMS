@@ -6,9 +6,9 @@ int main(int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv);
 
-  unsigned int mpi_ID;
+  int mpi_ID;
 
-  MPI_COMM_RANK(MPI_COMM_WORLD, mpi_ID);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_ID);
   if (mpi_ID == 0)
   {
     ns_sim_settings::SimulationSettings sim_settings = ns_sim_settings::base_sim_settings;
