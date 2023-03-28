@@ -4,7 +4,7 @@
 // Main function.
 int main(int argc, char *argv[])
 {
-  ns_sym_settings::SimulationSettings sim_settings = ns_sym_settings::base_sim_settings;
+  ns_sim_settings::SimulationSettings sim_settings = ns_sim_settings::base_sim_settings;
 
   if (argc > 1)
   {
@@ -14,11 +14,11 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  ns_sym_settings::print_simulation_settings(sim_settings);
+  ns_sim_settings::print_simulation_settings(sim_settings);
 
   Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv);
 
-  Problem problem(sym_settings);
+  Problem problem(sim_settings);
 
   problem.setup();
   problem.assemble();

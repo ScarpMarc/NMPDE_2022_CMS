@@ -1,7 +1,7 @@
 #include "SimulationSettings.hpp"
 #include <iostream>
 
-namespace ns_sym_settings
+namespace ns_sim_settings
 {
     void print_simulation_settings(const SimulationSettings &sim_settings)
     {

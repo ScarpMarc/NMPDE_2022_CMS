@@ -4,7 +4,7 @@
 #include <string>
 #include <array>
 
-namespace ns_sym_settings
+namespace ns_sim_settings
 {
     struct SimulationSettings
     {
@@ -23,7 +23,7 @@ namespace ns_sym_settings
     };
 
     const SimulationSettings base_sim_settings = {
-        "Ptero_reduced_x2.msh", // std::string file_name;
+        "Ptero_full.msh", // std::string file_name;
         2,                      // unsigned int degree_velocity;
         1,                      // unsigned int degree_pressure;
         1.0,                    // double coeff_nu;

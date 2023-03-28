@@ -130,7 +130,7 @@ public:
   };
 
 // Constructor.
-Problem(const SimulationSettings &simulation_settings)
+Problem(const ns_sim_settings::SimulationSettings &simulation_settings)
     : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), simulation_settings(simulation_settings), inlet_velocity(simulation_settings.inlet_velocity), degree_velocity(simulation_settings.degree_velocity), degree_pressure(simulation_settings.degree_pressure), /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
 {
 }
@@ -162,7 +162,7 @@ const unsigned int mpi_rank;
 ConditionalOStream pcout;
 
 // Problem definition. ///////////////////////////////////////////////////////
-SimulationSettings simulation_settings;
+ns_sim_settings::SimulationSettings simulation_settings;
 /*
 // Kinematic viscosity [m2/s].
 const double nu;
