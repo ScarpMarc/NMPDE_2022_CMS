@@ -285,12 +285,15 @@ Problem::assemble()
 
 
                   // Term given by the special-case preconditioer
-                  cell_matrix()
+                  cell_matrix(i, j) -= gamma *
+                                       fe_values[velocity].divergence(j, q) *
+                                       fe_values[velocity].divergence(i, q) * 
+                                       fe_values.JxW(q);
 
                   // Pressure mass matrix.
                   cell_pressure_mass_matrix(i, j) +=
                     fe_values[pressure].value(i, q) *
-                    fe_values[pressure].value(j, q) / nu * fe_values.JxW(q);
+                    fe_values[pressure].value(j, q) / simulation_settings.coeff_nu * fe_values.JxW(q);
                 }
 
               // Get the divergence of the previous
@@ -314,7 +317,12 @@ Problem::assemble()
                       pressure_loc[q] *
                           fe_values[velocity].divergence(i, q) +
                       velocity_divergence_loc *
-                          fe_values[pressure].value(i, q) -
+                          fe_values[pressure].value(i, q)
+                          -
+                      gamma * 
+                      velocity_divergence_loc * 
+                      fe_values[velocity].divergence(i, q)
+                       -
                       scalar_product(forcing_term_tensor,
                                      fe_values[velocity].value(i, q))) *
                   fe_values.JxW(q);
@@ -366,7 +374,7 @@ Problem::assemble()
     // We interpolate first the inlet velocity condition alone, then the wall
     // condition alone, so that the latter "win" over the former where the two
     // boundaries touch.
-    boundary_functions[0] = &simulation_settings.inlet_velocity;
+    boundary_functions[1] = &simulation_settings.inlet_velocity;
     VectorTools::interpolate_boundary_values(dof_handler,
                                              boundary_functions,
                                              boundary_values,
@@ -375,7 +383,10 @@ Problem::assemble()
 
     boundary_functions.clear();
     Functions::ZeroFunction<dim> zero_function(dim + 1);
-    boundary_functions[1] = &zero_function;
+    boundary_functions[0] = &zero_function; // Body 
+    boundary_functions[3] = &zero_function; // Slip
+    boundary_functions[4] = &zero_function; // Wall 
+   
     VectorTools::interpolate_boundary_values(dof_handler,
                                              boundary_functions,
                                              boundary_values,

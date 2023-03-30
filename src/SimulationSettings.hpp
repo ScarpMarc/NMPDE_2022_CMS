@@ -5,7 +5,6 @@
 #include <array>
 
 namespace ns_sim_settings
-namespace ns_sim_settings
 {
     struct SimulationSettings
     {

@@ -171,8 +171,7 @@ Problem(const ns_sim_settings::SimulationSettings &simulation_settings)
 protected:
   // MPI parallel. /////////////////////////////////////////////////////////////
 
-ns_sim_settings::SimulationSettings simulation_settings;
-
+  ns_sim_settings::SimulationSettings simulation_settings;
 
   // Number of MPI processes.
   const unsigned int mpi_size;
@@ -203,13 +202,13 @@ ns_sim_settings::SimulationSettings simulation_settings;
   // Discretization. ///////////////////////////////////////////////////////////
 
   // Mesh refinement.
-  std::string filename;
+  //std::string filename;
 
   // Polynomial degree used for velocity.
-  const unsigned int degree_velocity;
+  //const unsigned int degree_velocity;
 
   // Polynomial degree used for pressure.
-  const unsigned int degree_pressure;
+  //const unsigned int degree_pressure;
 
   // Mesh.
   parallel::fullydistributed::Triangulation<dim> mesh;
