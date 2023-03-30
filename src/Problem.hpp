@@ -29,10 +29,12 @@
 #include <deal.II/numerics/vector_tools.h>
 
 #include <fstream>
+#include <array>
 #include <iostream>
 
-using namespace dealii;
+#include "SimulationSettings.hpp"
 
+using namespace dealii;
 
 class Problem
 {
@@ -77,186 +79,155 @@ public:
   class InletVelocity : public Function<dim>
   {
   public:
-    InletVelocity()
-      : Function<dim>(dim + 1)
-    {}
+    InletVelocity(const ns_sim_settings::SimulationSettings &simulation_settings_)
+        : Function<dim>(dim + 1), components(simulation_settings_.inlet_velocity)
+    {
+    }
 
     virtual void
-    vector_value(const Point<dim> &p, Vector<double> &values) const override
+    vector_value(const Point<dim> &/*p*/, Vector<double> &values) const override
     {
-      values[0] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
 
-      for (unsigned int i = 1; i < dim + 1; ++i)
-        values[i] = 0.0;
+      for (unsigned int i = 0; i < dim; ++i)
+        values[i] = components[i];
+
+      values[3] = 0.0;
     }
 
     virtual double
-    value(const Point<dim> &p, const unsigned int component = 0) const override
+    value(const Point<dim> &/*p*/, const unsigned int component = 0) const override
     {
-      if (component == 0)
-        return -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
-      else
+      if (component == 3)
         return 0.0;
+      else
+        return components[component];
     }
 
   protected:
-    const double alpha = 1.0;
-  };
-
-  protected:
-
-    // Viscosity coefficient
-    double nu;
-    // Gamma coefficient
-    double gamma;
-    // Velocity stiffness matrix.
-    const TrilinosWrappers::SparseMatrix *velocity_stiffness;
-
-    // Preconditioner used for the velocity block.
-    TrilinosWrappers::PreconditionILU preconditioner_velocity;
-
-    // Pressure mass matrix.
-    const TrilinosWrappers::SparseMatrix *pressure_mass;
-
-    // Preconditioner used for the pressure block.
-    TrilinosWrappers::PreconditionILU preconditioner_pressure;
-
-    // B matrix.
-    const TrilinosWrappers::SparseMatrix *B_T;
-
-    // Temporary vector.
-    mutable TrilinosWrappers::MPI::Vector tmp;
+    const std::array<double, 3> components;
   };
 
 // Constructor.
 Problem(const ns_sim_settings::SimulationSettings &simulation_settings)
-    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), 
-    mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), 
-    pcout(std::cout, mpi_rank == 0), 
-    simulation_settings(simulation_settings), 
-    inlet_velocity(simulation_settings.inlet_velocity), 
-    degree_velocity(simulation_settings.degree_velocity), 
-    degree_pressure(simulation_settings.degree_pressure), 
-    /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
-Problem(const ns_sim_settings::SimulationSettings &simulation_settings)
-    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), simulation_settings(simulation_settings), inlet_velocity(simulation_settings.inlet_velocity), degree_velocity(simulation_settings.degree_velocity), degree_pressure(simulation_settings.degree_pressure), /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
+    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)),
+      mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)),
+            simulation_settings(simulation_settings),
+      pcout(std::cout, mpi_rank == 0),
+      inlet_velocity(simulation_settings),
+      /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
 {
 }
 
-  // Setup system.
-  void
-  setup();
+// Setup system.
+void setup();
 
-  // Assemble system. We also assemble the pressure mass matrix (needed for the
-  // preconditioner).
-  void
-  assemble();
+// Assemble system. We also assemble the pressure mass matrix (needed for the
+// preconditioner).
+void assemble();
 
-  // Solve linear system.
-  void                             
-  solveLinearSystem();          // risolve il sistema lineare
+// Solve linear system.
+void solveLinearSystem(); // risolve il sistema lineare
 
-  // solve Newton Method
-  void 
-  solveNewtonMethod();          // risolve il problema del metodo di newthon
-                                // chiamando piu volte solveLinearSystem
-  // solve problem in time
-  //void                          // risolve il problema per ogni istante di tempo
-  //solve();                      // TODO
+// solve Newton Method
+void solveNewtonMethod(); // risolve il problema del metodo di newthon
+                          // chiamando piu volte solveLinearSystem
+// solve problem in time
+// void                          // risolve il problema per ogni istante di tempo
+// solve();                      // TODO
 
-  // Output results.
-  void
-  output();
+// Output results.
+void output();
 
 protected:
-  // MPI parallel. /////////////////////////////////////////////////////////////
+// MPI parallel. /////////////////////////////////////////////////////////////
 
-  ns_sim_settings::SimulationSettings simulation_settings;
+ns_sim_settings::SimulationSettings simulation_settings;
 
-  // Number of MPI processes.
-  const unsigned int mpi_size;
+// Number of MPI processes.
+const unsigned int mpi_size;
 
-  // This MPI process.
-  const unsigned int mpi_rank;
+// This MPI process.
+const unsigned int mpi_rank;
 
-  // Parallel output stream.
-  ConditionalOStream pcout;
+// Parallel output stream.
+ConditionalOStream pcout;
 
-  // Problem definition. ///////////////////////////////////////////////////////
+// Problem definition. ///////////////////////////////////////////////////////
 
-  // Kinematic viscosity [m2/s].
-  //const double nu = 1.;
+// Kinematic viscosity [m2/s].
+// const double nu = 1.;
 
-  // Gamma parameter
-  const double gamma = 1.;
+// Gamma parameter
+const double gamma = 1.;
 
-  // Outlet pressure [Pa].
-  //const double p_out = 10.;
+// Outlet pressure [Pa].
+// const double p_out = 10.;
 
-  // Forcing term.
-  ForcingTerm forcing_term;
+// Forcing term.
+ForcingTerm forcing_term;
 
-  // Inlet velocity.
-  InletVelocity inlet_velocity;
+// Inlet velocity.
+InletVelocity inlet_velocity;
 
-  // Discretization. ///////////////////////////////////////////////////////////
+// Discretization. ///////////////////////////////////////////////////////////
 
-  // Mesh refinement.
-  //std::string filename;
+// Mesh refinement.
+// std::string filename;
 
-  // Polynomial degree used for velocity.
-  //const unsigned int degree_velocity;
+// Polynomial degree used for velocity.
+// const unsigned int degree_velocity;
 
-  // Polynomial degree used for pressure.
-  //const unsigned int degree_pressure;
+// Polynomial degree used for pressure.
+// const unsigned int degree_pressure;
 
-  // Mesh.
-  parallel::fullydistributed::Triangulation<dim> mesh;
+// Mesh.
+parallel::fullydistributed::Triangulation<dim> mesh;
 
-  // Finite element space.
-  std::unique_ptr<FiniteElement<dim>> fe;
+// Finite element space.
+std::unique_ptr<FiniteElement<dim>> fe;
 
-  // Quadrature formula.
-  std::unique_ptr<Quadrature<dim>> quadrature;
+// Quadrature formula.
+std::unique_ptr<Quadrature<dim>> quadrature;
 
-  // Quadrature formula for face integrals.
-  std::unique_ptr<Quadrature<dim - 1>> quadrature_face;
+// Quadrature formula for face integrals.
+std::unique_ptr<Quadrature<dim - 1>> quadrature_face;
 
-  // DoF handler.
-  DoFHandler<dim> dof_handler;
+// DoF handler.
+DoFHandler<dim> dof_handler;
 
-  // DoFs owned by current process.
-  IndexSet locally_owned_dofs;
+// DoFs owned by current process.
+IndexSet locally_owned_dofs;
 
-  // DoFs owned by current process in the velocity and pressure blocks.
-  std::vector<IndexSet> block_owned_dofs;
+// DoFs owned by current process in the velocity and pressure blocks.
+std::vector<IndexSet> block_owned_dofs;
 
-  // DoFs relevant to the current process (including ghost DoFs).
-  IndexSet locally_relevant_dofs;
+// DoFs relevant to the current process (including ghost DoFs).
+IndexSet locally_relevant_dofs;
 
-  // DoFs relevant to current process in the velocity and pressure blocks.
-  std::vector<IndexSet> block_relevant_dofs;
+// DoFs relevant to current process in the velocity and pressure blocks.
+std::vector<IndexSet> block_relevant_dofs;
 
-  // Pressure mass matrix, needed for preconditioning. We use a block matrix for
-  // convenience, but in practice we only look at the pressure-pressure block.
-  TrilinosWrappers::BlockSparseMatrix pressure_mass;
+// Pressure mass matrix, needed for preconditioning. We use a block matrix for
+// convenience, but in practice we only look at the pressure-pressure block.
+TrilinosWrappers::BlockSparseMatrix pressure_mass;
 
-  // System solution (without ghost elements).
-  TrilinosWrappers::MPI::BlockVector solution_owned;
+// System solution (without ghost elements).
+TrilinosWrappers::MPI::BlockVector solution_owned;
 
-  // System solution (including ghost elements).
-  TrilinosWrappers::MPI::BlockVector solution;
+// System solution (including ghost elements).
+TrilinosWrappers::MPI::BlockVector solution;
 
-  //
-  //  variabili relative alla linearizzazione del sistema =>
-  //
+//
+//  variabili relative alla linearizzazione del sistema =>
+//
 
-  // Jacobian matrix.
-  TrilinosWrappers::BlockSparseMatrix jacobian_matrix;
+// Jacobian matrix.
+TrilinosWrappers::BlockSparseMatrix jacobian_matrix;
 
-  // Residual vector.
-  TrilinosWrappers::MPI::BlockVector residual_vector;
+// Residual vector.
+TrilinosWrappers::MPI::BlockVector residual_vector;
 
-  // Increment of the solution between Newton iterations.
-  TrilinosWrappers::MPI::BlockVector delta_owned;
-};
+// Increment of the solution between Newton iterations.
+TrilinosWrappers::MPI::BlockVector delta_owned;
+}
+;

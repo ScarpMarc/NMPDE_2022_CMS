@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv);
 
   ns_sim_settings::SimulationSettings sim_settings;
+  sim_settings = ns_sim_settings::base_sim_settings;
 
   int mpi_ID;
 
@@ -30,7 +31,8 @@ int main(int argc, char *argv[])
 
   problem.setup();
   problem.assemble();
-  problem.solve();
+  problem.solveNewtonMethod();
+  //problem.solve();
   problem.output();
 
   return 0;
