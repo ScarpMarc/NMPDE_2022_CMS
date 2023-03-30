@@ -29,5 +29,9 @@ namespace ns_sim_settings
         std::cout << "Desired Newton solver precision: " << sim_settings.desired_newton_precision << std::endl; // 1e-6,//double desired_solver_precision;
 
         std::cout << "Theta for Theta Method: " << sim_settings.theta << std::endl;                      // 0.5//double theta;
+        std::cout << std::endl;
+        std::cout << "Total time steps: " << sim_settings.total_time_steps << std::endl;           // 100,// unsigned long total_time_steps;
+        std::cout << "Time steps per second: " << sim_settings.time_steps_per_second << std::endl; // 10// double seconds_per_time_steps;
+        std::cout << std::endl;
     }
 }

@@ -5,6 +5,7 @@
 #include <array>
 
 namespace ns_sim_settings
+namespace ns_sim_settings
 {
     struct SimulationSettings
     {
@@ -23,10 +24,13 @@ namespace ns_sim_settings
         double desired_newton_precision;
 
         double theta;
+
+        unsigned long total_time_steps;
+        unsigned long time_steps_per_second;
     };
 
     const SimulationSettings base_sim_settings = {
-        "Ptero_reduced_x2.msh", // std::string file_name;
+        "Ptero_full.msh", // std::string file_name;
         2,                      // unsigned int degree_velocity;
         1,                      // unsigned int degree_pressure;
         1.0,                    // double coeff_nu;
