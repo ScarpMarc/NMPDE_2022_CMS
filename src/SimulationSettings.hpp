@@ -4,7 +4,7 @@
 #include <string>
 #include <array>
 
-namespace ns_sym_settings
+namespace ns_sim_settings
 {
     struct SimulationSettings
     {
@@ -19,6 +19,9 @@ namespace ns_sym_settings
         unsigned int max_solver_iteration_amt;
         double desired_solver_precision;
 
+        unsigned int max_newton_iteration_amt;
+        double desired_newton_precision;
+
         double theta;
     };
 
@@ -31,6 +34,8 @@ namespace ns_sym_settings
         10.0,                   // double outlet_pressure;
         5000,                   // unsigned int max_solver_iteration_amt;
         1e-6,                   // double desired_solver_precision;
+        1000,                   //unsigned int max_newton_iteration_amt;
+        1e-6,                   //double desired_newton_precision;
         0.5                     // double theta;
     };
 

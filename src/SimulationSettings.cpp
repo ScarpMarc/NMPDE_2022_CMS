@@ -1,7 +1,7 @@
 #include "SimulationSettings.hpp"
 #include <iostream>
 
-namespace ns_sym_settings
+namespace ns_sim_settings
 {
     void print_simulation_settings(const SimulationSettings &sim_settings)
     {
@@ -24,6 +24,10 @@ namespace ns_sym_settings
 
         std::cout << "Max. solver iterations: " << sim_settings.max_solver_iteration_amt << std::endl;   // 5000,//unsigned int max_solver_iteration_amt;
         std::cout << "Desired solver precision: " << sim_settings.desired_solver_precision << std::endl; // 1e-6,//double desired_solver_precision;
+
+        std::cout << "Max. Newton solver iterations: " << sim_settings.max_newton_iteration_amt << std::endl;   // 1000,//unsigned int max_solver_iteration_amt;
+        std::cout << "Desired Newton solver precision: " << sim_settings.desired_newton_precision << std::endl; // 1e-6,//double desired_solver_precision;
+
         std::cout << "Theta for Theta Method: " << sim_settings.theta << std::endl;                      // 0.5//double theta;
     }
 }

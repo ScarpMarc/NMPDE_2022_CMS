@@ -1,5 +1,4 @@
-#ifndef STOKES_HPP
-#define STOKES_HPP
+
 
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/quadrature_lib.h>
@@ -32,14 +31,9 @@
 #include <fstream>
 #include <iostream>
 
-#include <string>
-
-#include "SimulationSettings.hpp"
-#include "PreconditionBlockTriangular.hpp"
-
 using namespace dealii;
 
-// Class implementing a solver for the Stokes problem.
+
 class Problem
 {
 public:
@@ -83,150 +77,185 @@ public:
   class InletVelocity : public Function<dim>
   {
   public:
-    InletVelocity(const std::array<double, 3> &velocity)
-        : Function<dim>(dim + 1), components(velocity)
-    {
-    }
+    InletVelocity()
+      : Function<dim>(dim + 1)
+    {}
 
     virtual void
     vector_value(const Point<dim> &p, Vector<double> &values) const override
     {
+      values[0] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
 
-      for (unsigned int i = 0; i < dim; ++i)
-        values[i] = components[i];
-
-      values[3] = 0.0;
+      for (unsigned int i = 1; i < dim + 1; ++i)
+        values[i] = 0.0;
     }
 
     virtual double
     value(const Point<dim> &p, const unsigned int component = 0) const override
     {
-      if (component == 3)
-        return 0.0;
+      if (component == 0)
+        return -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
       else
-        return components[component];
+        return 0.0;
     }
 
   protected:
-    const std::array<double, 3> components;
+    const double alpha = 1.0;
   };
 
-  // Since we're working with block matrices, we need to make our own
-  // preconditioner class. A preconditioner class can be any class that exposes
-  // a vmult method that applies the inverse of the preconditioner.
+  protected:
 
-  // Identity preconditioner.
-  class PreconditionIdentity
-  {
-  public:
-    // Application of the preconditioner: we just copy the input vector (src)
-    // into the output vector (dst).
-    void
-    vmult(TrilinosWrappers::MPI::BlockVector &dst,
-          const TrilinosWrappers::MPI::BlockVector &src) const
-    {
-      dst = src;
-    }
+    // Viscosity coefficient
+    double nu;
+    // Gamma coefficient
+    double gamma;
+    // Velocity stiffness matrix.
+    const TrilinosWrappers::SparseMatrix *velocity_stiffness;
+
+    // Preconditioner used for the velocity block.
+    TrilinosWrappers::PreconditionILU preconditioner_velocity;
+
+    // Pressure mass matrix.
+    const TrilinosWrappers::SparseMatrix *pressure_mass;
+
+    // Preconditioner used for the pressure block.
+    TrilinosWrappers::PreconditionILU preconditioner_pressure;
+
+    // B matrix.
+    const TrilinosWrappers::SparseMatrix *B_T;
+
+    // Temporary vector.
+    mutable TrilinosWrappers::MPI::Vector tmp;
   };
 
 // Constructor.
-Problem(const SimulationSettings &simulation_settings)
-    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), simulation_settings(simulation_settings), inlet_velocity(simulation_settings.inlet_velocity), degree_velocity(simulation_settings.degree_velocity), degree_pressure(simulation_settings.degree_pressure), /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
+Problem(const ns_sim_settings::SimulationSettings &simulation_settings)
+    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), 
+    mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), 
+    pcout(std::cout, mpi_rank == 0), 
+    simulation_settings(simulation_settings), 
+    inlet_velocity(simulation_settings.inlet_velocity), 
+    degree_velocity(simulation_settings.degree_velocity), 
+    degree_pressure(simulation_settings.degree_pressure), 
+    /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
 {
 }
 
-// Setup system.
-void setup();
+  // Setup system.
+  void
+  setup();
 
-// Assemble system. We also assemble the pressure mass matrix (needed for the
-// preconditioner).
-void assemble();
+  // Assemble system. We also assemble the pressure mass matrix (needed for the
+  // preconditioner).
+  void
+  assemble();
 
-// Solve system.
-void solve();
+  // Solve linear system.
+  void                             
+  solveLinearSystem();          // risolve il sistema lineare
 
-// Output results.
-void output();
+  // solve Newton Method
+  void 
+  solveNewtonMethod();          // risolve il problema del metodo di newthon
+                                // chiamando piu volte solveLinearSystem
+  // solve problem in time
+  //void                          // risolve il problema per ogni istante di tempo
+  //solve();                      // TODO
+
+  // Output results.
+  void
+  output();
 
 protected:
-// MPI parallel. /////////////////////////////////////////////////////////////
-const std::string file_name;
+  // MPI parallel. /////////////////////////////////////////////////////////////
 
-// Number of MPI processes.
-const unsigned int mpi_size;
+ns_sim_settings::SimulationSettings simulation_settings;
 
-// This MPI process.
-const unsigned int mpi_rank;
 
-// Parallel output stream.
-ConditionalOStream pcout;
+  // Number of MPI processes.
+  const unsigned int mpi_size;
 
-// Problem definition. ///////////////////////////////////////////////////////
-SimulationSettings simulation_settings;
-/*
-// Kinematic viscosity [m2/s].
-const double nu;
+  // This MPI process.
+  const unsigned int mpi_rank;
 
-// Outlet pressure [Pa].
-const double p_out;
-*/
+  // Parallel output stream.
+  ConditionalOStream pcout;
 
-// Forcing term.
-ForcingTerm forcing_term;
+  // Problem definition. ///////////////////////////////////////////////////////
 
-// Inlet velocity.
-InletVelocity inlet_velocity;
+  // Kinematic viscosity [m2/s].
+  //const double nu = 1.;
 
-// Discretization. ///////////////////////////////////////////////////////////
+  // Gamma parameter
+  const double gamma = 1.;
 
-// Polynomial degree used for velocity.
-const unsigned int degree_velocity;
+  // Outlet pressure [Pa].
+  //const double p_out = 10.;
 
-// Polynomial degree used for pressure.
-const unsigned int degree_pressure;
+  // Forcing term.
+  ForcingTerm forcing_term;
 
-// Mesh.
-parallel::fullydistributed::Triangulation<dim> mesh;
+  // Inlet velocity.
+  InletVelocity inlet_velocity;
 
-// Finite element space.
-std::unique_ptr<FiniteElement<dim>> fe;
+  // Discretization. ///////////////////////////////////////////////////////////
 
-// Quadrature formula.
-std::unique_ptr<Quadrature<dim>> quadrature;
+  // Mesh refinement.
+  std::string filename;
 
-// Quadrature formula for face integrals.
-std::unique_ptr<Quadrature<dim - 1>> quadrature_face;
+  // Polynomial degree used for velocity.
+  const unsigned int degree_velocity;
 
-// DoF handler.
-DoFHandler<dim> dof_handler;
+  // Polynomial degree used for pressure.
+  const unsigned int degree_pressure;
 
-// DoFs owned by current process.
-IndexSet locally_owned_dofs;
+  // Mesh.
+  parallel::fullydistributed::Triangulation<dim> mesh;
 
-// DoFs owned by current process in the velocity and pressure blocks.
-std::vector<IndexSet> block_owned_dofs;
+  // Finite element space.
+  std::unique_ptr<FiniteElement<dim>> fe;
 
-// DoFs relevant to the current process (including ghost DoFs).
-IndexSet locally_relevant_dofs;
+  // Quadrature formula.
+  std::unique_ptr<Quadrature<dim>> quadrature;
 
-// DoFs relevant to current process in the velocity and pressure blocks.
-std::vector<IndexSet> block_relevant_dofs;
+  // Quadrature formula for face integrals.
+  std::unique_ptr<Quadrature<dim - 1>> quadrature_face;
 
-// System matrix.
-TrilinosWrappers::BlockSparseMatrix system_matrix;
+  // DoF handler.
+  DoFHandler<dim> dof_handler;
 
-// Pressure mass matrix, needed for preconditioning. We use a block matrix for
-// convenience, but in practice we only look at the pressure-pressure block.
-TrilinosWrappers::BlockSparseMatrix pressure_mass;
+  // DoFs owned by current process.
+  IndexSet locally_owned_dofs;
 
-// Right-hand side vector in the linear system.
-TrilinosWrappers::MPI::BlockVector system_rhs;
+  // DoFs owned by current process in the velocity and pressure blocks.
+  std::vector<IndexSet> block_owned_dofs;
 
-// System solution (without ghost elements).
-TrilinosWrappers::MPI::BlockVector solution_owned;
+  // DoFs relevant to the current process (including ghost DoFs).
+  IndexSet locally_relevant_dofs;
 
-// System solution (including ghost elements).
-TrilinosWrappers::MPI::BlockVector solution;
+  // DoFs relevant to current process in the velocity and pressure blocks.
+  std::vector<IndexSet> block_relevant_dofs;
+
+  // Pressure mass matrix, needed for preconditioning. We use a block matrix for
+  // convenience, but in practice we only look at the pressure-pressure block.
+  TrilinosWrappers::BlockSparseMatrix pressure_mass;
+
+  // System solution (without ghost elements).
+  TrilinosWrappers::MPI::BlockVector solution_owned;
+
+  // System solution (including ghost elements).
+  TrilinosWrappers::MPI::BlockVector solution;
+
+  //
+  //  variabili relative alla linearizzazione del sistema =>
+  //
+
+  // Jacobian matrix.
+  TrilinosWrappers::BlockSparseMatrix jacobian_matrix;
+
+  // Residual vector.
+  TrilinosWrappers::MPI::BlockVector residual_vector;
+
+  // Increment of the solution between Newton iterations.
+  TrilinosWrappers::MPI::BlockVector delta_owned;
 };
-
-#endif
