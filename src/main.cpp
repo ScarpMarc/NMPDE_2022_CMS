@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     // assembliamo il problema usando la quantitá di non linearitá selezionata
     problem.assemble(nucoeff);
     problem.solveNewtonMethod();
-    
+
   }
   //problem.solve();
   problem.output();
