@@ -125,7 +125,7 @@ void setup();
 
 // Assemble system. We also assemble the pressure mass matrix (needed for the
 // preconditioner).
-void assemble();
+void assemble(double nonlinearita = 1.0);
 
 // Solve linear system.
 void solveLinearSystem(); // risolve il sistema lineare
