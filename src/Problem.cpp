@@ -368,11 +368,11 @@ void Problem::assemble_stokes_only()
   }
 }
 
-void Problem::assemble(double nonlinearita = 1.0)
+void Problem::assemble(double nonlinearita)
 {
   pcout << "===============================================" << std::endl;
   pcout << "Assembling the system" << std::endl;
-  double local_nu = simulation_settings.coeff_nu * nonlinearita;
+  //double local_nu = simulation_settings.coeff_nu * nonlinearita;
 
   const unsigned int dofs_per_cell = fe->dofs_per_cell;
   const unsigned int n_q = quadrature->size();
