@@ -274,7 +274,7 @@ void Problem::assemble()
                                fe_values.JxW(q);
 
           // Term given by the special-case preconditioer
-          cell_matrix(i, j) -= gamma *
+          cell_matrix(i, j) += simulation_settings.gamma *
                                fe_values[velocity].divergence(j, q) *
                                fe_values[velocity].divergence(i, q) *
                                fe_values.JxW(q);
@@ -282,7 +282,7 @@ void Problem::assemble()
           // Pressure mass matrix.
           cell_pressure_mass_matrix(i, j) +=
               fe_values[pressure].value(i, q) *
-              fe_values[pressure].value(j, q) / simulation_settings.coeff_nu * fe_values.JxW(q);
+              fe_values[pressure].value(j, q) * fe_values.JxW(q);
         }
 
         // Get the divergence of the previous
@@ -294,24 +294,29 @@ void Problem::assemble()
 
         cell_rhs(i) +=
             ( // Viscosity term
+                -
                 simulation_settings.coeff_nu *
-                    scalar_product(velocity_gradient_loc[q],
-                                   fe_values[velocity].gradient(i, q))
+                scalar_product(velocity_gradient_loc[q],
+                fe_values[velocity].gradient(i, q))
                 // Convolution term
-                - velocity_gradient_loc[q] *
-                      velocity_loc[q] *
-                      fe_values[velocity].value(i, q)
+                - 
+                velocity_gradient_loc[q] *
+                velocity_loc[q] *
+                fe_values[velocity].value(i, q)
                 // Pressure term
                 +
                 pressure_loc[q] *
-                    fe_values[velocity].divergence(i, q) +
+                fe_values[velocity].divergence(i, q) 
+                +
                 velocity_divergence_loc *
-                    fe_values[pressure].value(i, q) -
-                gamma *
-                    velocity_divergence_loc *
-                    fe_values[velocity].divergence(i, q) -
+                fe_values[pressure].value(i, q) 
+                -
+                simulation_settings.gamma *
+                velocity_divergence_loc *
+                fe_values[velocity].divergence(i, q) 
+                +
                 scalar_product(forcing_term_tensor,
-                               fe_values[velocity].value(i, q))) *
+                fe_values[velocity].value(i, q))) *
             fe_values.JxW(q);
       }
     }
@@ -331,7 +336,7 @@ void Problem::assemble()
             for (unsigned int i = 0; i < dofs_per_cell; ++i)
             {
               cell_rhs(i) +=
-                  -simulation_settings.outlet_pressure *
+                  simulation_settings.outlet_pressure *
                   scalar_product(fe_face_values.normal_vector(q),
                                  fe_face_values[velocity].value(i,
                                                                 q)) *
@@ -432,7 +437,7 @@ void Problem::solveLinearSystem()
                             pressure_mass.block(1, 1),
                             jacobian_matrix.block(0, 1),
                             simulation_settings.coeff_nu,
-                            gamma);
+                            simulation_settings.gamma);
 
   pcout << "Solving the linear system" << std::endl;
   solver.solve(jacobian_matrix,

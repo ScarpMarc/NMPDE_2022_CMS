@@ -42,7 +42,7 @@ public:
              const double &nu_,
              const double & gamma_) // jacobian_matrix.block(0, 1)
   {
-    velocity_stiffness = &velocity_stiffness_;
+    velocity_stiffness = velocity_stiffness_;
     pressure_mass = &pressure_mass_;
     B_T = &B_T_;
     nu = nu_;
@@ -72,6 +72,8 @@ public:
                                dst.block(0),
                                tmp,
                                preconditioner_velocity);
+
+      
     }
 
     {
@@ -98,7 +100,7 @@ protected:
   const TrilinosWrappers::SparseMatrix *velocity_stiffness;
 
   // Preconditioner used for the velocity block.
-  TrilinosWrappers::PreconditionILU preconditioner_velocity;
+  //TrilinosWrappers::PreconditionILU preconditioner_velocity;
 
   // Pressure mass matrix.
   const TrilinosWrappers::SparseMatrix *pressure_mass;

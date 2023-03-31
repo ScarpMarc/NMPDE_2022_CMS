@@ -23,6 +23,8 @@
 #include <deal.II/lac/trilinos_parallel_block_vector.h>
 #include <deal.II/lac/trilinos_precondition.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
+#include <deal.II/lac/trilinos_solver.h>
+
 
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/matrix_tools.h>
@@ -158,7 +160,7 @@ ConditionalOStream pcout;
 // const double nu = 1.;
 
 // Gamma parameter
-const double gamma = 1.;
+//const double gamma = 1.;
 
 // Outlet pressure [Pa].
 // const double p_out = 10.;

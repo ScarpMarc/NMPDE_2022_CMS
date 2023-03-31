@@ -10,6 +10,7 @@ namespace ns_sim_settings
         std::cout << std::endl;
 
         std::cout << "nu coefficient: " << sim_settings.coeff_nu << std::endl;              // 1.0,//double coeff_nu;
+        std::cout << "gamma coefficient: " << sim_settings.gamma << std::endl;              // 1.0,//double gamma;
         std::cout << "Outlet pressure (Pa): " << sim_settings.outlet_pressure << std::endl; // 10.0,//double outlet_pressure;
         std::cout << "Inlet velocity components (m/s): ";
         for (unsigned int i = 0; i < 3; ++i)

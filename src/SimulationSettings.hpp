@@ -13,6 +13,7 @@ namespace ns_sim_settings
         unsigned int degree_pressure;
 
         double coeff_nu;
+        double gamma;
         std::array<double, 3> inlet_velocity;
         double outlet_pressure;
 
@@ -33,6 +34,7 @@ namespace ns_sim_settings
         2,                      // unsigned int degree_velocity;
         1,                      // unsigned int degree_pressure;
         1.0,                    // double coeff_nu;
+        1.0,                    // double gamma;
         {0.0, 10.0, 0.0},       // std::array<double, 3> inlet_velocity;
         10.0,                   // double outlet_pressure;
         5000,                   // unsigned int max_solver_iteration_amt;
