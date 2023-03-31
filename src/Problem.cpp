@@ -439,12 +439,12 @@ void Problem::assemble(bool only_rhs, double nonlinearita)
 
     fe_values.reinit(cell);
 
-    if(only_rhs) {
+    if (only_rhs)
+    {
       cell_matrix = 0.0;
       cell_pressure_mass_matrix = 0.0;
     }
     cell_rhs = 0.0;
-
 
     // We need to compute the Jacobian matrix and the residual for current
     // cell. This requires knowing the value and the gradient of u^{(k)}
@@ -468,51 +468,52 @@ void Problem::assemble(bool only_rhs, double nonlinearita)
       {
         for (unsigned int j = 0; j < dofs_per_cell; ++j)
         {
-          if(only_rhs)
+          if (only_rhs)
           {
-          // Viscosity term.
-          cell_matrix(i, j) +=
-              simulation_settings.coeff_nu *
-              scalar_product(fe_values[velocity].gradient(j, q),
-                             fe_values[velocity].gradient(i, q)) *
-              fe_values.JxW(q);
+            // Viscosity term.
+            cell_matrix(i, j) +=
+                simulation_settings.coeff_nu *
+                scalar_product(fe_values[velocity].gradient(j, q),
+                               fe_values[velocity].gradient(i, q)) *
+                fe_values.JxW(q);
 
-          // Convective term
-          cell_matrix(i, j) += nonlinearita *
-                               ((velocity_gradient_loc[q] *
-                                     fe_values[velocity].value(j, q) *
-                                     fe_values[velocity].value(i, q) +
-                                 fe_values[velocity].gradient(j, q) *
-                                     velocity_loc[q] *
-                                     fe_values[velocity].value(i, q)) *
-                                fe_values.JxW(q));
+            // Convective term
+            cell_matrix(i, j) += nonlinearita *
+                                 ((velocity_gradient_loc[q] *
+                                       fe_values[velocity].value(j, q) *
+                                       fe_values[velocity].value(i, q) +
+                                   fe_values[velocity].gradient(j, q) *
+                                       velocity_loc[q] *
+                                       fe_values[velocity].value(i, q)) *
+                                  fe_values.JxW(q));
 
-          // Pressure term in the momentum equation.
-          cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
-                               fe_values[pressure].value(i, q) *
-                               fe_values.JxW(q);
+            // Pressure term in the momentum equation.
+            cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
+                                 fe_values[pressure].value(i, q) *
+                                 fe_values.JxW(q);
 
-          // Pressure term in the continuity equation.
-          cell_matrix(i, j) -= fe_values[pressure].value(j, q) *
-                               fe_values[velocity].divergence(i, q) *
-                               fe_values.JxW(q);
+            // Pressure term in the continuity equation.
+            cell_matrix(i, j) -= fe_values[pressure].value(j, q) *
+                                 fe_values[velocity].divergence(i, q) *
+                                 fe_values.JxW(q);
 
-          // Term given by the special-case preconditioer
-          cell_matrix(i, j) += nonlinearita * simulation_settings.gamma *
-                               fe_values[velocity].divergence(j, q) *
-                               fe_values[velocity].divergence(i, q) *
-                               fe_values.JxW(q);
+            // Term given by the special-case preconditioer
+            cell_matrix(i, j) += nonlinearita * simulation_settings.gamma *
+                                 fe_values[velocity].divergence(j, q) *
+                                 fe_values[velocity].divergence(i, q) *
+                                 fe_values.JxW(q);
 
-          // Pressure mass matrix.
-          cell_pressure_mass_matrix(i, j) +=
-              fe_values[pressure].value(i, q) *
-              fe_values[pressure].value(j, q) * fe_values.JxW(q);
-        }
+            // Pressure mass matrix.
+            cell_pressure_mass_matrix(i, j) +=
+                fe_values[pressure].value(i, q) *
+                fe_values[pressure].value(j, q) / (1.0 / (double) simulation_settings.total_time_steps) // deltaT
+                * fe_values.JxW(q);
+          }
 
-        // Get the divergence of the previous
+          // Get the divergence of the previous
 
-        double velocity_divergence_loc =
-            trace(velocity_gradient_loc[q]);
+          double velocity_divergence_loc =
+              trace(velocity_gradient_loc[q]);
         }
         // Forcing term.
 
@@ -693,9 +694,11 @@ void Problem::solve_time_step()
     solution = solution_owned;
   }
 
-  for (unsigned long i = 0; i < simulation_settings.total_time_steps; ++i)
+  for (current_time = 0; current_time < simulation_settings.total_time_steps; ++i)
   {
-    pcout << "Solving time step " << i << std::endl;
+    pcout << "Solving time step " << current_time << std::endl;
+
+    inlet_velocity.set_factor((double)current_time / (double)simulation_settings.total_time_steps);
 
     // assembla il membro destro del sistema lineare
     // True per assemblare solo il rhs
@@ -703,7 +706,7 @@ void Problem::solve_time_step()
     // risolvi il sistema lineare
     solveLinearSystem();
     // salva la soluzione
-    output(i);
+    output(current_time);
 
     // incrementa il tempo corrente nel for
   }
@@ -756,7 +759,7 @@ void Problem::solveNewtonMethod(
   }
 }
 
-void Problem::output(const unsigned long & time_step)
+void Problem::output(const unsigned long &time_step)
 {
   pcout << "===============================================" << std::endl;
 
