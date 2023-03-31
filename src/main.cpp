@@ -29,9 +29,22 @@ int main(int argc, char *argv[])
 
   Problem problem(sim_settings);
 
+  int steps = 10;
+  std::vector<double> nonlinearita(steps + 1);
+  for(int i = 0 ; i < steps + 1;i++) {
+      nonlinearita[i] = static_cast<double> / steps;
+  }
+
+  // Carico il problema
   problem.setup();
-  problem.assemble();
-  problem.solveNewtonMethod();
+
+  // per ogni coefficiente di non linearitá
+  for( auto & nucoeff : nonlinearita ) {
+    // assembliamo il problema usando la quantitá di non linearitá selezionata
+    problem.assemble(nucoeff);
+    problem.solveNewtonMethod();
+    
+  }
   //problem.solve();
   problem.output();
 
