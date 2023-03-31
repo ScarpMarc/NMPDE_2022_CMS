@@ -81,14 +81,16 @@ public:
       B_T->vmult(tmp, dst.block(1));
       tmp.sadd(-1.0, src.block(0));
 
-      SolverControl solver_control_velocity(1000,
-                                            1e-2 * src.block(0).l2_norm());
-      SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
-          solver_control_velocity);
-      solver_cg_velocity.solve(*velocity_stiffness,
-                                dst.block(0),
-                                tmp,
-                                preconditioner_velocity);
+      // SolverControl solver_control_velocity(1000,
+      //                                       1e-2 * src.block(0).l2_norm());
+      // SolverGMRES<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
+      //     solver_control_velocity);
+      // solver_cg_velocity.solve(*velocity_stiffness,
+      //                           dst.block(0),
+      //                           tmp,
+      //                           preconditioner_velocity);
+
+      velocity_stiffness->vmult(dst.block(0), tmp);
 
       
     }
