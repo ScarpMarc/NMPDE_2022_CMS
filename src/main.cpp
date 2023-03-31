@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
   int steps = 10;
   std::vector<double> nonlinearita(steps + 1);
   for(int i = 0 ; i < steps + 1;i++) {
-      nonlinearita[i] = static_cast<double> / steps;
+      nonlinearita[i] = static_cast<double>(i) / steps;
   }
 
   // Carico il problema
