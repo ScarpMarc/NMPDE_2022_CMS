@@ -127,6 +127,8 @@ void setup();
 // preconditioner).
 void assemble(double nonlinearita = 1.0);
 
+void Problem::compute_initial_guess(double step_size);
+
 // Solve linear system.
 void solveLinearSystem(); // risolve il sistema lineare
 
