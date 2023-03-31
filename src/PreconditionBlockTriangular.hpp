@@ -60,23 +60,6 @@ public:
   {
 
     {
-      tmp.reinit(src.block(0));
-      B_T->vmult(tmp, dst.block(1));
-      tmp.sadd(-1.0, src.block(0));
-
-      SolverControl solver_control_velocity(1000,
-                                            1e-2 * src.block(0).l2_norm());
-      SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
-          solver_control_velocity);
-      solver_cg_velocity.solve(*velocity_stiffness,
-                               dst.block(0),
-                               tmp,
-                               preconditioner_velocity);
-
-      
-    }
-
-    {
 
       // Application of the lower half of the preconditioner
       SolverControl solver_control_pressure(1000,
@@ -91,6 +74,27 @@ public:
     }
   }
 
+  {
+
+    // Application of the upper half of the preconditioner
+    tmp.reinit(src.block(0));
+    B_T->vmult(tmp, dst.block(1));
+    tmp.sadd(-1.0, src.block(0));
+
+    SolverControl solver_control_velocity(1000,
+                                          1e-2 * src.block(0).l2_norm());
+    SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
+        solver_control_velocity);
+    solver_cg_velocity.solve(*velocity_stiffness,
+                              dst.block(0),
+                              tmp,
+                              preconditioner_velocity);
+
+    
+  }
+
+    
+
 protected:
   // Viscosity coefficient
   double nu;
@@ -100,7 +104,7 @@ protected:
   const TrilinosWrappers::SparseMatrix *velocity_stiffness;
 
   // Preconditioner used for the velocity block.
-  //TrilinosWrappers::PreconditionILU preconditioner_velocity;
+  TrilinosWrappers::PreconditionILU preconditioner_velocity;
 
   // Pressure mass matrix.
   const TrilinosWrappers::SparseMatrix *pressure_mass;
