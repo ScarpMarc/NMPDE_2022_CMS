@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
   // per ogni coefficiente di non linearitá
   for( auto & nucoeff : nonlinearita ) {
     // assembliamo il problema usando la quantitá di non linearitá selezionata
+    std::cout << "livello di proporzione stokes vs navier-stokes = " << (1 - nucoeff) << "\t" << nucoeff << std::endl;
     problem.assemble(nucoeff);
     problem.solveNewtonMethod();
 

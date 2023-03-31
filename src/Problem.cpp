@@ -167,7 +167,7 @@ void Problem::setup()
 /************************************************************************/
 /************************************************************************/
 
-void Problem::assemble_stokes_only()
+/*void Problem::assemble_stokes_only()
 {
   pcout << "===============================================" << std::endl;
   pcout << "Assembling the system" << std::endl;
@@ -264,7 +264,7 @@ void Problem::assemble_stokes_only()
               fe_values.JxW(q);*/
 
           // Pressure term in the momentum equation.
-          cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
+          /*cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
                                fe_values[pressure].value(i, q) *
                                fe_values.JxW(q);
 
@@ -366,7 +366,7 @@ void Problem::assemble_stokes_only()
     MatrixTools::apply_boundary_values(
         boundary_values, jacobian_matrix, solution, residual_vector, false);
   }
-}
+}*/
 
 void Problem::assemble(double nonlinearita)
 {
