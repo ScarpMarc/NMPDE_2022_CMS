@@ -123,9 +123,11 @@ Problem(const ns_sim_settings::SimulationSettings &simulation_settings)
 // Setup system.
 void setup();
 
+void solve_time_step();
+
 // Assemble system. We also assemble the pressure mass matrix (needed for the
 // preconditioner).
-void assemble(double nonlinearita = 1.0);
+void assemble(bool only_rhs = false, double nonlinearita = 1.0);
 
 void Problem::compute_initial_guess(double step_size);
 
@@ -140,7 +142,7 @@ void solveNewtonMethod(); // risolve il problema del metodo di newthon
 // solve();                      // TODO
 
 // Output results.
-void output();
+void output(const unsigned long & time_step);
 
 protected:
 // MPI parallel. /////////////////////////////////////////////////////////////

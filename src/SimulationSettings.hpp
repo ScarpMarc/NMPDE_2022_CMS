@@ -41,7 +41,9 @@ namespace ns_sim_settings
         1e-6,                   // double desired_solver_precision;
         1000,                   //unsigned int max_newton_iteration_amt;
         1e-6,                   //double desired_newton_precision;
-        0.5                     // double theta;
+        0.5,                     // double theta;
+        10,                     //unsigned long total_time_steps;
+        10                      //unsigned long time_steps_per_second;
     };
 
     void print_simulation_settings(const SimulationSettings &sim_settings);

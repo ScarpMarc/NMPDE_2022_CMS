@@ -263,116 +263,133 @@ void Problem::setup()
                    fe_values[velocity].value(i, q)) *
               fe_values.JxW(q);*/
 
-          // Pressure term in the momentum equation.
-          /*cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
-                               fe_values[pressure].value(i, q) *
-                               fe_values.JxW(q);
+// Pressure term in the momentum equation.
+/*cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
+                     fe_values[pressure].value(i, q) *
+                     fe_values.JxW(q);
 
-          // Pressure term in the continuity equation.
-          cell_matrix(i, j) -= fe_values[velocity].divergence(i, q) *
-                               fe_values[pressure].value(j, q) *
-                               fe_values.JxW(q);
+// Pressure term in the continuity equation.
+cell_matrix(i, j) -= fe_values[velocity].divergence(i, q) *
+                     fe_values[pressure].value(j, q) *
+                     fe_values.JxW(q);
 
-          // Term given by the special-case preconditioer
-          cell_matrix(i, j) -= gamma *
-                               fe_values[velocity].divergence(j, q) *
-                               fe_values[velocity].divergence(i, q) *
-                               fe_values.JxW(q);
+// Term given by the special-case preconditioer
+cell_matrix(i, j) -= gamma *
+                     fe_values[velocity].divergence(j, q) *
+                     fe_values[velocity].divergence(i, q) *
+                     fe_values.JxW(q);
 
-          // Pressure mass matrix.
-          cell_pressure_mass_matrix(i, j) +=
-              fe_values[pressure].value(i, q) *
-              fe_values[pressure].value(j, q) / simulation_settings.coeff_nu * fe_values.JxW(q);
-        }
+// Pressure mass matrix.
+cell_pressure_mass_matrix(i, j) +=
+    fe_values[pressure].value(i, q) *
+    fe_values[pressure].value(j, q) / simulation_settings.coeff_nu * fe_values.JxW(q);
+}
 
-        // Get the divergence of the previous
+// Get the divergence of the previous
 
-        double velocity_divergence_loc =
-            trace(velocity_gradient_loc[q]);
+double velocity_divergence_loc =
+  trace(velocity_gradient_loc[q]);
 
-        // Forcing term.
+// Forcing term.
 
-        cell_rhs(i) +=
-            scalar_product(forcing_term_tensor,
-                           fe_values[velocity].value(i, q)) *
-            fe_values.JxW(q);
-      }
-    }
+cell_rhs(i) +=
+  scalar_product(forcing_term_tensor,
+                 fe_values[velocity].value(i, q)) *
+  fe_values.JxW(q);
+}
+}
 
-    // Boundary integral for Neumann BCs.
-    if (cell->at_boundary())
-    {
-      for (unsigned int f = 0; f < cell->n_faces(); ++f)
-      {
-        if (cell->face(f)->at_boundary() &&
-            cell->face(f)->boundary_id() == 2)
-        {
-          fe_face_values.reinit(cell, f);
+// Boundary integral for Neumann BCs.
+if (cell->at_boundary())
+{
+for (unsigned int f = 0; f < cell->n_faces(); ++f)
+{
+if (cell->face(f)->at_boundary() &&
+  cell->face(f)->boundary_id() == 2)
+{
+fe_face_values.reinit(cell, f);
 
-          for (unsigned int q = 0; q < n_q_face; ++q)
-          {
-            for (unsigned int i = 0; i < dofs_per_cell; ++i)
-            {
-              cell_rhs(i) +=
-                  -simulation_settings.outlet_pressure *
-                  scalar_product(fe_face_values.normal_vector(q),
-                                 fe_face_values[velocity].value(i,
-                                                                q)) *
-                  fe_face_values.JxW(q);
-            }
-          }
-        }
-      }
-    }
-
-    cell->get_dof_indices(dof_indices);
-
-    jacobian_matrix.add(dof_indices, cell_matrix);
-    residual_vector.add(dof_indices, cell_rhs);
-    pressure_mass.add(dof_indices, cell_pressure_mass_matrix);
-  }
-
-  jacobian_matrix.compress(VectorOperation::add);
-  residual_vector.compress(VectorOperation::add);
-  pressure_mass.compress(VectorOperation::add);
-
-  // Dirichlet boundary conditions.
+for (unsigned int q = 0; q < n_q_face; ++q)
+{
+  for (unsigned int i = 0; i < dofs_per_cell; ++i)
   {
-    std::map<types::global_dof_index, double> boundary_values;
-    std::map<types::boundary_id, const Function<dim> *> boundary_functions;
-
-    // We interpolate first the inlet velocity condition alone, then the wall
-    // condition alone, so that the latter "win" over the former where the two
-    // boundaries touch.
-    boundary_functions[1] = &inlet_velocity;
-    VectorTools::interpolate_boundary_values(dof_handler,
-                                             boundary_functions,
-                                             boundary_values,
-                                             ComponentMask(
-                                                 {true, true, true, false}));
-
-    boundary_functions.clear();
-    Functions::ZeroFunction<dim> zero_function(dim + 1);
-    boundary_functions[0] = &zero_function; // Body
-    boundary_functions[3] = &zero_function; // Slip
-    boundary_functions[4] = &zero_function; // Wall
-
-    VectorTools::interpolate_boundary_values(dof_handler,
-                                             boundary_functions,
-                                             boundary_values,
-                                             ComponentMask(
-                                                 {true, true, true, false}));
-
-    MatrixTools::apply_boundary_values(
-        boundary_values, jacobian_matrix, solution, residual_vector, false);
+    cell_rhs(i) +=
+        -simulation_settings.outlet_pressure *
+        scalar_product(fe_face_values.normal_vector(q),
+                       fe_face_values[velocity].value(i,
+                                                      q)) *
+        fe_face_values.JxW(q);
   }
+}
+}
+}
+}
+
+cell->get_dof_indices(dof_indices);
+
+jacobian_matrix.add(dof_indices, cell_matrix);
+residual_vector.add(dof_indices, cell_rhs);
+pressure_mass.add(dof_indices, cell_pressure_mass_matrix);
+}
+
+jacobian_matrix.compress(VectorOperation::add);
+residual_vector.compress(VectorOperation::add);
+pressure_mass.compress(VectorOperation::add);
+
+// Dirichlet boundary conditions.
+{
+std::map<types::global_dof_index, double> boundary_values;
+std::map<types::boundary_id, const Function<dim> *> boundary_functions;
+
+// We interpolate first the inlet velocity condition alone, then the wall
+// condition alone, so that the latter "win" over the former where the two
+// boundaries touch.
+boundary_functions[1] = &inlet_velocity;
+VectorTools::interpolate_boundary_values(dof_handler,
+                                   boundary_functions,
+                                   boundary_values,
+                                   ComponentMask(
+                                       {true, true, true, false}));
+
+boundary_functions.clear();
+Functions::ZeroFunction<dim> zero_function(dim + 1);
+boundary_functions[0] = &zero_function; // Body
+boundary_functions[3] = &zero_function; // Slip
+boundary_functions[4] = &zero_function; // Wall
+
+VectorTools::interpolate_boundary_values(dof_handler,
+                                   boundary_functions,
+                                   boundary_values,
+                                   ComponentMask(
+                                       {true, true, true, false}));
+
+MatrixTools::apply_boundary_values(
+boundary_values, jacobian_matrix, solution, residual_vector, false);
+}
 }*/
 
-void Problem::assemble(double nonlinearita)
+void Problem::compute_initial_guess(double step_size)
+{
+  const double target_Re = 1.0 / simulation_settings.coeff_nu;
+
+  bool is_initial_step = true;
+
+  for (double Re = 1000.0; Re < target_Re;
+       Re = std::min(Re + step_size, target_Re))
+  {
+    viscosity = 1.0 / Re;
+    std::cout << "Searching for initial guess with Re = " << Re
+              << std::endl;
+    solveNewtonMethod(1e-4, 50, 0, is_initial_step, false);
+    is_initial_step = false;
+  }
+}
+
+void Problem::assemble(bool only_rhs, double nonlinearita)
 {
   pcout << "===============================================" << std::endl;
   pcout << "Assembling the system" << std::endl;
-  //double local_nu = simulation_settings.coeff_nu * nonlinearita;
+  // double local_nu = simulation_settings.coeff_nu * nonlinearita;
 
   const unsigned int dofs_per_cell = fe->dofs_per_cell;
   const unsigned int n_q = quadrature->size();
@@ -422,9 +439,12 @@ void Problem::assemble(double nonlinearita)
 
     fe_values.reinit(cell);
 
-    cell_matrix = 0.0;
+    if(only_rhs) {
+      cell_matrix = 0.0;
+      cell_pressure_mass_matrix = 0.0;
+    }
     cell_rhs = 0.0;
-    cell_pressure_mass_matrix = 0.0;
+
 
     // We need to compute the Jacobian matrix and the residual for current
     // cell. This requires knowing the value and the gradient of u^{(k)}
@@ -448,6 +468,8 @@ void Problem::assemble(double nonlinearita)
       {
         for (unsigned int j = 0; j < dofs_per_cell; ++j)
         {
+          if(only_rhs)
+          {
           // Viscosity term.
           cell_matrix(i, j) +=
               simulation_settings.coeff_nu *
@@ -491,7 +513,7 @@ void Problem::assemble(double nonlinearita)
 
         double velocity_divergence_loc =
             trace(velocity_gradient_loc[q]);
-
+        }
         // Forcing term.
 
         cell_rhs(i) +=
@@ -512,8 +534,7 @@ void Problem::assemble(double nonlinearita)
                                     fe_values[pressure].value(i, q) -
                                 simulation_settings.gamma *
                                     velocity_divergence_loc *
-                                    fe_values[velocity].divergence(i, q)
-                                    ) +
+                                    fe_values[velocity].divergence(i, q)) +
              scalar_product(forcing_term_tensor,
                             fe_values[velocity].value(i, q))) *
             fe_values.JxW(q);
@@ -647,19 +668,15 @@ void Problem::solveLinearSystem()
         << std::endl;
 }
 
-void Problem::solveNewtonMethod()
+void Problem::solve_time_step()
 {
-  pcout << "===============================================" << std::endl;
-  // parametri
-  const unsigned int n_max_iters = simulation_settings.max_newton_iteration_amt;
-  const double residual_tolerance = simulation_settings.desired_newton_precision;
-
-  unsigned int n_iter = 0;
-  double residual_norm = residual_tolerance + 1;
+  SolverControl solver_control(simulation_settings.max_solver_iteration_amt, simulation_settings.desired_solver_precision * system_rhs.l2_norm());
 
   // We apply the boundary conditions to the initial guess (which is stored in
   // solution_owned and solution).
   {
+    pcout << "Applying the initial condition" << std::endl;
+
     IndexSet dirichlet_dofs = DoFTools::extract_boundary_dofs(dof_handler);
 
     // function_g.set_time(time);
@@ -675,6 +692,40 @@ void Problem::solveNewtonMethod()
     solution_owned.compress(VectorOperation::insert);
     solution = solution_owned;
   }
+
+  for (unsigned long i = 0; i < simulation_settings.total_time_steps; ++i)
+  {
+    pcout << "Solving time step " << i << std::endl;
+
+    // assembla il membro destro del sistema lineare
+    // True per assemblare solo il rhs
+    assemble(true);
+    // risolvi il sistema lineare
+    solveLinearSystem();
+    // salva la soluzione
+    output(i);
+
+    // incrementa il tempo corrente nel for
+  }
+}
+
+void Problem::solveNewtonMethod(
+    // const double       tolerance,
+    const unsigned int max_n_line_searches,
+    // const unsigned int max_n_refinements,
+    const bool is_initial_step,
+    // const bool         output_result
+)
+{
+  bool first_step = is_initial_step;
+
+  pcout << "===============================================" << std::endl;
+  // parametri
+  const unsigned int n_max_iters = simulation_settings.max_newton_iteration_amt;
+  const double residual_tolerance = simulation_settings.desired_newton_precision;
+
+  unsigned int n_iter = 0;
+  double residual_norm = residual_tolerance + 1;
 
   while (n_iter < n_max_iters && residual_norm > residual_tolerance)
   {
@@ -705,7 +756,7 @@ void Problem::solveNewtonMethod()
   }
 }
 
-void Problem::output()
+void Problem::output(const unsigned long & time_step)
 {
   pcout << "===============================================" << std::endl;
 
@@ -733,7 +784,7 @@ void Problem::output()
 
   data_out.build_patches();
 
-  const std::string output_file_name = "output-Ptero";
+  const std::string output_file_name = "output-Ptero-" + std::to_string(time_step);
 
   DataOutBase::DataOutFilter data_filter(
       DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
