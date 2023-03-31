@@ -372,6 +372,7 @@ void Problem::assemble(double nonlinearita = 1.0)
 {
   pcout << "===============================================" << std::endl;
   pcout << "Assembling the system" << std::endl;
+  double local_nu = simulation_settings.coeff_nu * nonlinearita;
 
   const unsigned int dofs_per_cell = fe->dofs_per_cell;
   const unsigned int n_q = quadrature->size();
@@ -455,14 +456,14 @@ void Problem::assemble(double nonlinearita = 1.0)
               fe_values.JxW(q);
 
           // Convective term
-          cell_matrix(i, j) +=
-             ( (velocity_gradient_loc[q] *
-                   fe_values[velocity].value(j, q) *
-                   fe_values[velocity].value(i, q) +
-               fe_values[velocity].gradient(j, q) *
-                   velocity_loc[q] *
-                   fe_values[velocity].value(i, q)) *
-              fe_values.JxW(q)) * nonlinearita;
+          cell_matrix(i, j) += nonlinearita *
+                               ((velocity_gradient_loc[q] *
+                                     fe_values[velocity].value(j, q) *
+                                     fe_values[velocity].value(i, q) +
+                                 fe_values[velocity].gradient(j, q) *
+                                     velocity_loc[q] *
+                                     fe_values[velocity].value(i, q)) *
+                                fe_values.JxW(q));
 
           // Pressure term in the momentum equation.
           cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
@@ -475,7 +476,7 @@ void Problem::assemble(double nonlinearita = 1.0)
                                fe_values.JxW(q);
 
           // Term given by the special-case preconditioer
-          cell_matrix(i, j) += simulation_settings.gamma *
+          cell_matrix(i, j) += nonlinearita * simulation_settings.gamma *
                                fe_values[velocity].divergence(j, q) *
                                fe_values[velocity].divergence(i, q) *
                                fe_values.JxW(q);
@@ -494,30 +495,27 @@ void Problem::assemble(double nonlinearita = 1.0)
         // Forcing term.
 
         cell_rhs(i) +=
-            ( // Viscosity term
-                -
-                simulation_settings.coeff_nu *
-                scalar_product(velocity_gradient_loc[q],
-                fe_values[velocity].gradient(i, q))
-                // Convolution term
-                - 
-                velocity_gradient_loc[q] *
-                velocity_loc[q] *
-                fe_values[velocity].value(i, q)
-                // Pressure term
-                +
-                pressure_loc[q] *
-                fe_values[velocity].divergence(i, q) 
-                +
-                velocity_divergence_loc *
-                fe_values[pressure].value(i, q) 
-                -
-                simulation_settings.gamma *
-                velocity_divergence_loc *
-                fe_values[velocity].divergence(i, q) 
-                +
-                scalar_product(forcing_term_tensor,
-                fe_values[velocity].value(i, q))) *
+            (nonlinearita * ( // Viscosity term
+                                -simulation_settings.coeff_nu *
+                                    scalar_product(velocity_gradient_loc[q],
+                                                   fe_values[velocity].gradient(i, q))
+                                // Convolution term
+                                -
+                                velocity_gradient_loc[q] *
+                                    velocity_loc[q] *
+                                    fe_values[velocity].value(i, q)
+                                // Pressure term
+                                +
+                                pressure_loc[q] *
+                                    fe_values[velocity].divergence(i, q) +
+                                velocity_divergence_loc *
+                                    fe_values[pressure].value(i, q) -
+                                simulation_settings.gamma *
+                                    velocity_divergence_loc *
+                                    fe_values[velocity].divergence(i, q)
+                                    ) +
+             scalar_product(forcing_term_tensor,
+                            fe_values[velocity].value(i, q))) *
             fe_values.JxW(q);
       }
     }
