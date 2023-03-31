@@ -42,7 +42,7 @@ public:
              const double &nu_,
              const double & gamma_) // jacobian_matrix.block(0, 1)
   {
-    velocity_stiffness = velocity_stiffness_;
+    velocity_stiffness = &velocity_stiffness_;
     pressure_mass = &pressure_mass_;
     B_T = &B_T_;
     nu = nu_;
@@ -72,26 +72,29 @@ public:
                                preconditioner_pressure);
       dst.block(1) *= -(nu + gamma);
     }
+
+    {
+
+      // Application of the upper half of the preconditioner
+      // "using the data for the lower half"
+      tmp.reinit(src.block(0));
+      B_T->vmult(tmp, dst.block(1));
+      tmp.sadd(-1.0, src.block(0));
+
+      SolverControl solver_control_velocity(1000,
+                                            1e-2 * src.block(0).l2_norm());
+      SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
+          solver_control_velocity);
+      solver_cg_velocity.solve(*velocity_stiffness,
+                                dst.block(0),
+                                tmp,
+                                preconditioner_velocity);
+
+      
+    }
   }
 
-  {
-
-    // Application of the upper half of the preconditioner
-    tmp.reinit(src.block(0));
-    B_T->vmult(tmp, dst.block(1));
-    tmp.sadd(-1.0, src.block(0));
-
-    SolverControl solver_control_velocity(1000,
-                                          1e-2 * src.block(0).l2_norm());
-    SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
-        solver_control_velocity);
-    solver_cg_velocity.solve(*velocity_stiffness,
-                              dst.block(0),
-                              tmp,
-                              preconditioner_velocity);
-
-    
-  }
+  
 
     
 
