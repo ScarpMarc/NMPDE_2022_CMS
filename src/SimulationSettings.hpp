@@ -30,7 +30,7 @@ namespace ns_sim_settings
     };
 
     const SimulationSettings base_sim_settings = {
-        "Ptero_full.msh", // std::string file_name;
+        "Ptero_small.msh", // std::string file_name;
         2,                      // unsigned int degree_velocity;
         1,                      // unsigned int degree_pressure;
         1.0,                    // double coeff_nu;

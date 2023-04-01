@@ -667,7 +667,7 @@ void Problem::solveLinearSystem()
                delta_owned,
                residual_vector,
                preconditioner);
-  pcout << "  " << solver_control.last_step() << " GMRES iterations - the residual norm is " << residual_vector.l2_norm()
+  pcout << "  " << std::to_string(solver_control.last_step()) << " GMRES iterations - the residual norm is " /*<< residual_vector.l2_norm()*/
         << std::endl;
 }
 
@@ -707,6 +707,7 @@ void Problem::solve_time_step()
     assemble(true);
     // risolvi il sistema lineare
     solveLinearSystem();
+    pcout << "System solved for this time step. Saving to file..." << std::endl;
     // salva la soluzione
     output(current_time);
 
@@ -789,7 +790,8 @@ void Problem::output(const unsigned long &time_step)
 
   data_out.build_patches();
 
-  const std::string output_file_name = "output-Ptero-" + std::to_string(time_step);
+// FIXME
+  std::string output_file_name = "output-Ptero-" + std::to_string((unsigned int)time_step);
 
   DataOutBase::DataOutFilter data_filter(
       DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
