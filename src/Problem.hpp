@@ -104,7 +104,7 @@ public:
         return components[component] * factor;
     }
 
-    void set_factor(const double &factor) { factor = factor; }
+    void set_factor(const double &factor) { this->factor = factor; }
     double get_factor() const { return factor; }
 
   protected:
@@ -133,13 +133,19 @@ public:
   // preconditioner).
   void assemble(bool only_rhs = false, double nonlinearita = 1.0);
 
-  void Problem::compute_initial_guess(double step_size);
+  //void Problem::compute_initial_guess(double step_size);
 
   // Solve linear system.
   void solveLinearSystem(); // risolve il sistema lineare
 
   // solve Newton Method
-  void solveNewtonMethod(); // risolve il problema del metodo di newthon
+  void solveNewtonMethod(
+    // const double       tolerance,
+    const unsigned int max_n_line_searches,
+    // const unsigned int max_n_refinements,
+    const bool is_initial_step
+    // const bool         output_result
+); // risolve il problema del metodo di newthon
                             // chiamando piu volte solveLinearSystem
   // solve problem in time
   // void                          // risolve il problema per ogni istante di tempo

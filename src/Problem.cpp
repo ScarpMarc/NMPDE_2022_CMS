@@ -368,7 +368,7 @@ boundary_values, jacobian_matrix, solution, residual_vector, false);
 }
 }*/
 
-void Problem::compute_initial_guess(double step_size)
+/*void Problem::compute_initial_guess(double step_size)
 {
   const double target_Re = 1.0 / simulation_settings.coeff_nu;
 
@@ -383,7 +383,7 @@ void Problem::compute_initial_guess(double step_size)
     solveNewtonMethod(1e-4, 50, 0, is_initial_step, false);
     is_initial_step = false;
   }
-}
+}*/
 
 void Problem::assemble(bool only_rhs, double nonlinearita)
 {
@@ -510,11 +510,13 @@ void Problem::assemble(bool only_rhs, double nonlinearita)
                 * fe_values.JxW(q);
           }
 
-          // Get the divergence of the previous
+          
 
-          double velocity_divergence_loc =
-              trace(velocity_gradient_loc[q]);
+          
         }
+        // Get the divergence of the previous
+        double velocity_divergence_loc =
+              trace(velocity_gradient_loc[q]);
         // Forcing term.
 
         cell_rhs(i) +=
@@ -671,7 +673,7 @@ void Problem::solveLinearSystem()
 
 void Problem::solve_time_step()
 {
-  SolverControl solver_control(simulation_settings.max_solver_iteration_amt, simulation_settings.desired_solver_precision * system_rhs.l2_norm());
+  SolverControl solver_control(simulation_settings.max_solver_iteration_amt, simulation_settings.desired_solver_precision * residual_vector.l2_norm());
 
   // We apply the boundary conditions to the initial guess (which is stored in
   // solution_owned and solution).
@@ -694,7 +696,7 @@ void Problem::solve_time_step()
     solution = solution_owned;
   }
 
-  for (current_time = 0; current_time < simulation_settings.total_time_steps; ++i)
+  for (current_time = 0; current_time < simulation_settings.total_time_steps; ++current_time)
   {
     pcout << "Solving time step " << current_time << std::endl;
 
@@ -716,7 +718,7 @@ void Problem::solveNewtonMethod(
     // const double       tolerance,
     const unsigned int max_n_line_searches,
     // const unsigned int max_n_refinements,
-    const bool is_initial_step,
+    const bool is_initial_step
     // const bool         output_result
 )
 {

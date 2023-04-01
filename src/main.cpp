@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   }
   */
   //problem.solve();
-  problem.output();
+  //problem.output();
 
   return 0;
 }
