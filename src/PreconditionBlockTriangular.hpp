@@ -48,8 +48,9 @@ public:
     nu = nu_;
     gamma = gamma_;
 
-    preconditioner_velocity.initialize(velocity_stiffness_);
+    //preconditioner_velocity.initialize(velocity_stiffness_);
     preconditioner_pressure.initialize(pressure_mass_);
+
   }
 
   // Application of the preconditioner.
@@ -74,6 +75,7 @@ public:
     }
 
     {
+      
 
       // Application of the upper half of the preconditioner
       // "using the data for the lower half"
@@ -81,22 +83,30 @@ public:
       B_T->vmult(tmp, dst.block(1));
       tmp.sadd(-1.0, src.block(0));
 
-      SolverControl solver_control_velocity(1000,
-                                            1e-2 * src.block(0).l2_norm());
-      SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
-          solver_control_velocity);
-      solver_cg_velocity.solve(*velocity_stiffness,
-                                dst.block(0),
-                                tmp,
-                                preconditioner_velocity);
+      //SolverControl solver_control_velocity(1000,
+      //                                      1e-2 * src.block(0).l2_norm());
+      // SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_velocity(
+      //     solver_control_velocity);
+      // solver_cg_velocity.solve(*velocity_stiffness,
+      //                           dst.block(0),
+      //                           tmp,
+      //                           preconditioner_velocity);
+
+      // Declare a SolverControl object
+      SolverControl solver_control_velocity(1000, 1e-2 * src.block(0).l2_norm());
+      // Declare the DirectSolver object
+      // Direct Solver: for convrergence issues, we are using direct solvers
+      TrilinosWrappers::SolverDirect vel_stiff_inverse(solver_control_velocity);
+
+      // Initialize the direct solver
+      vel_stiff_inverse.initialize(*velocity_stiffness);
+
+      vel_stiff_inverse.solve(dst.block(0),tmp);
 
       
     }
   }
 
-  
-
-    
 
 protected:
   // Viscosity coefficient
@@ -107,7 +117,8 @@ protected:
   const TrilinosWrappers::SparseMatrix *velocity_stiffness;
 
   // Preconditioner used for the velocity block.
-  TrilinosWrappers::PreconditionILU preconditioner_velocity;
+  //TrilinosWrappers::PreconditionILU preconditioner_velocity;
+
 
   // Pressure mass matrix.
   const TrilinosWrappers::SparseMatrix *pressure_mass;
