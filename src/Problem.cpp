@@ -496,11 +496,11 @@ void Problem::assemble()
             ( // Viscosity term
                 simulation_settings.coeff_nu *
                     scalar_product(velocity_gradient_loc[q],
-                                   fe_values[velocity].gradient(i, q))
-                // Convolution term
-                - velocity_gradient_loc[q] *
-                      velocity_loc[q] *
-                      fe_values[velocity].value(i, q)
+                                   fe_values[velocity].gradient(i, q)) *
+                    // Convolution term
+                    -velocity_gradient_loc[q] *
+                    velocity_loc[q] *
+                    fe_values[velocity].value(i, q)
                 // Pressure term
                 +
                 pressure_loc[q] *
@@ -621,7 +621,7 @@ void Problem::solveLinearSystem()
 
   SolverControl solver_control(simulation_settings.max_solver_iteration_amt, simulation_settings.desired_solver_precision * residual_vector.l2_norm());
 
-  SolverFGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
+  SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
   // PreconditionBlockDiagonal preconditioner;
   // preconditioner.initialize(system_matrix.block(0, 0),
@@ -639,7 +639,7 @@ void Problem::solveLinearSystem()
                delta_owned,
                residual_vector,
                preconditioner);
-  pcout << "  " << solver_control.last_step() << " GMRES iterations - the residual norm is " << residual_vector.l2_norm()
+  pcout << "  " << solver_control.last_step() << " GMRES iterations"
         << std::endl;
 }
 
@@ -674,7 +674,7 @@ void Problem::solveNewtonMethod()
 
   while (n_iter < n_max_iters && residual_norm > residual_tolerance)
   {
-    pcout << "Newton: back to assembly - the residual norm was " << residual_norm << std::endl;
+    pcout << "Newton: back to assembly" << std::endl;
     assemble();                                // riassemblo
     residual_norm = residual_vector.l2_norm(); // calcolo la norma residuo
 
@@ -687,8 +687,7 @@ void Problem::solveNewtonMethod()
     if (residual_norm > residual_tolerance)
     {
       solveLinearSystem();
-      double learning_rate = 0.01;
-      delta_owned *= learning_rate;
+
       solution_owned += delta_owned;
       solution = solution_owned;
     }
