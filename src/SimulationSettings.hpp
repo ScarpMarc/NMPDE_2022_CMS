@@ -32,7 +32,7 @@ namespace ns_sim_settings
         "Ptero_full.msh", // std::string file_name;
         2,                      // unsigned int degree_velocity;
         1,                      // unsigned int degree_pressure;
-        1.0,                    // double coeff_nu;
+        1.825e-5,                    // double coeff_nu; (Dynamic viscosity), air at 18°C
         {0.0, 10.0, 0.0},       // std::array<double, 3> inlet_velocity;
         10.0,                   // double outlet_pressure;
         5000,                   // unsigned int max_solver_iteration_amt;
