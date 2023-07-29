@@ -1,15 +1,73 @@
 #include "SimulationSettings.hpp"
 #include <iostream>
-#include <dealii/base/parameter_handler.h>
+#include <fstream>
+
+using namespace dealii;
 
 namespace ns_sim_settings
 {
     SimulationSettings::SimulationSettings()
-        : file_name("Ptero_full.msh"), degree_velocity(2), degree_pressure(1), coeff_nu(1.825e-5), coeff_nu_start(2.5e-3), coeff_nu_ramp_down_times(10), coeff_rho(1.204), inlet_velocity({0.0, 10.0, 0.0}), inlet_velocity_increment_per_step({0.0, .1, 0.0}), outlet_pressure(10.0), max_solver_iteration_amt(5000), desired_solver_precision(1e-6), max_newton_iteration_amt(1000), desired_newton_precision(1e-6), theta(0.5), total_time_steps(100), time_steps_per_second(10)
+        : SimulationSettings(
+              "Ptero_full.msh", // file_name("Ptero_full.msh"),
+              2,                //        degree_velocity(2),
+              1,                //        degree_pressure(1),
+              1.825e-5,         //        coeff_nu(1.825e-5),
+              2.5e-3,           //        coeff_nu_start(2.5e-3),
+              10,               //        coeff_nu_ramp_down_times(10),
+              1.204,            //        coeff_rho(1.204),
+              {0.0, 10.0, 0.0}, //        inlet_velocity({0.0, 10.0, 0.0}),
+              {0.0, .1, 0.0},   //        inlet_velocity_increment_per_step({0.0, .1, 0.0}),
+              10.0,             //        outlet_pressure(10.0),
+              5000,             //        max_solver_iteration_amt(5000),
+              1e-6,             //        desired_solver_precision(1e-6),
+              1000,             //        max_newton_iteration_amt(1000),
+              1e-6,             //        desired_newton_precision(1e-6),
+              0.5,              //        theta(0.5),
+              100,              //        total_time_steps(100),
+              10                //        time_steps_per_second(10)
+          )
+    {
+    }
+
+    SimulationSettings::SimulationSettings(const std::string file_name,
+                       const unsigned int degree_velocity,
+                       const unsigned int degree_pressure,
+                       const double coeff_nu,
+                       const double coeff_nu_start,
+                       const unsigned int coeff_nu_ramp_down_times,
+                       const double coeff_rho,
+                       const std::array<double, 3> inlet_velocity,
+                       const std::array<double, 3> inlet_velocity_increment_per_step,
+                       const double outlet_pressure,
+                       const unsigned int max_solver_iteration_amt,
+                       const double desired_solver_precision,
+                       const unsigned int max_newton_iteration_amt,
+                       const double desired_newton_precision,
+                       const double theta,
+                       const unsigned long total_time_steps,
+                       const unsigned long time_steps_per_second) : file_name(file_name),
+                                                                    degree_velocity(degree_velocity),
+                                                                    degree_pressure(degree_pressure),
+                                                                    coeff_nu(coeff_nu),
+                                                                    coeff_nu_start(coeff_nu_start),
+                                                                    coeff_nu_ramp_down_times(coeff_nu_ramp_down_times),
+                                                                    coeff_rho(coeff_rho),
+                                                                    inlet_velocity(inlet_velocity),
+                                                                    inlet_velocity_increment_per_step(inlet_velocity_increment_per_step),
+                                                                    outlet_pressure(outlet_pressure),
+                                                                    max_solver_iteration_amt(max_solver_iteration_amt),
+                                                                    desired_solver_precision(desired_solver_precision),
+                                                                    max_newton_iteration_amt(max_newton_iteration_amt),
+                                                                    desired_newton_precision(desired_newton_precision),
+                                                                    theta(theta),
+                                                                    total_time_steps(total_time_steps),
+                                                                    time_steps_per_second(time_steps_per_second),
+                                                                    ramp_down_step_size(0.0),
+                                                                    advised_ramp_down_step_size(0.0)
     {
         prm.declare_entry("file_name",
                           "Ptero_full.msh",
-                          Patterns::FileName,
+                          Patterns::FileName(),
                           " Mesh file name.");
 
         prm.enter_subsection("Finite-element settings");
@@ -31,7 +89,7 @@ namespace ns_sim_settings
             {
                 prm.declare_entry("coeff_nu",
                                   "1.825e-5",
-                                  Patterns::Integer(0.0),
+                                  Patterns::Double(0.0),
                                   " Viscosity coefficient (nu) [Pa*s]. ");
                 prm.declare_entry("coeff_nu_start",
                                   "2.5e-3",
@@ -164,6 +222,11 @@ namespace ns_sim_settings
                           "the solution. ");
     }
 
+    void SimulationSettings::print() const
+    {
+        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::PRM);
+    }
+
     void print_simulation_settings(const SimulationSettings &sim_settings)
     {
         // Output settings
@@ -195,12 +258,12 @@ namespace ns_sim_settings
         std::cout << "Time steps per second: " << sim_settings.time_steps_per_second << std::endl; // 10// double seconds_per_time_steps;
         std::cout << std::endl;*/
 
-        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::KeepDeclarationOrder);
+        sim_settings.print();
     }
 
     void SimulationSettings::read_data(const std::string &filename)
     {
-        std::ifstream file(filename);
+        std::ifstream file(filename, std::ios::in);
         AssertThrow(file, ExcFileNotOpen(filename));
 
         prm.parse_input(file);

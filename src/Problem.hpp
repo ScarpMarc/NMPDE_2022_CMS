@@ -111,7 +111,6 @@ public:
 Problem(const ns_sim_settings::SimulationSettings &simulation_settings)
     : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)),
       mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)),
-            simulation_settings(simulation_settings),
       pcout(std::cout, mpi_rank == 0),
       inlet_velocity(simulation_settings),
       /*file_name(SimulationSettings.file_name), degree_velocity(SimulationSettings.degree_velocity), degree_pressure(SimulationSettings.degree_pressure), nu(SimulationSettings.coeff_nu), p_out(SimulationSettings.outlet_pressure), */ mesh(MPI_COMM_WORLD)
