@@ -224,7 +224,7 @@ namespace ns_sim_settings
 
     void SimulationSettings::print() const
     {
-        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::PRM);
+        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::JSON);
     }
 
     void print_simulation_settings(const SimulationSettings &sim_settings)
