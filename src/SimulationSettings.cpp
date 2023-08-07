@@ -16,8 +16,8 @@ namespace ns_sim_settings
               2.5e-3,           //        coeff_nu_start(2.5e-3),
               10,               //        coeff_nu_ramp_down_times(10),
               1.204,            //        coeff_rho(1.204),
-              {0.0, 10.0, 0.0}, //        inlet_velocity_start({0.0, 10.0, 0.0}),
-              {0.0, 10, 0.0},   //        inlet_velocity_end({0.0, .1, 0.0}),
+              {10.0, 0.0, 0.0}, //        inlet_velocity_start({0.0, 10.0, 0.0}),
+              {10.0, 0.0, 0.0},   //        inlet_velocity_end({0.0, .1, 0.0}),
               10.0,             //        outlet_pressure(10.0),
               5000,             //        max_solver_iteration_amt(5000),
               1e-6,             //        desired_solver_precision(1e-6),
@@ -123,11 +123,11 @@ advised_ramp_down_step_size(0.0)
         prm.enter_subsection("Inlet velocity");
         {
             prm.declare_entry("inlet_velocity_start",
-                              "0.0, 10.0, 0.0",
+                              "10.0, 0.0, 0.0",
                               Patterns::List(Patterns::Double(0.0)),
                               " Inlet velocity components at time 0 [m/s]. ");
             prm.declare_entry("inlet_velocity_end",
-                              "0.0, 10.1, 0.0",
+                              "10.0, 0.0, 0.0",
                               Patterns::List(Patterns::Double(0.0)),
                               " Inlet velocity components at end time [m/s]. ");
         }
