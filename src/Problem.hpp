@@ -105,9 +105,9 @@ public:
             else
             {
                 return settings.inlet_velocity_start[component] + 
-                (double)(settings.total_time_steps - current_time_step) * 
+                (double)(settings.current_time_step) * 
                 settings.time_steps_per_second * 
-                (settings.inlet_velocity_start[component] - settings.inlet_velocity_end[component]);
+                (settings.inlet_velocity_end[component] - settings.inlet_velocity_start[component]);
             }
                 
         }
