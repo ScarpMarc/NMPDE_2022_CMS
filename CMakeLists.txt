@@ -22,7 +22,7 @@ add_executable(Ptero src/main.cpp src/Problem.cpp src/SimulationSettings.cpp)
 
 add_custom_command(
   TARGET Ptero POST_BUILD
-  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/mesh/Ptero_full.msh ${CMAKE_CURRENT_BINARY_DIR}/
+  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/mesh/* ${CMAKE_CURRENT_BINARY_DIR}/
   )
 
 deal_ii_setup_target(Ptero)

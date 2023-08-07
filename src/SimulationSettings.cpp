@@ -8,7 +8,8 @@ namespace ns_sim_settings
 {
     SimulationSettings::SimulationSettings()
         : SimulationSettings(
-              "Ptero_full.msh", // file_name("Ptero_full.msh"),
+              "cylinder3d.msh", // file_name("Ptero_full.msh"),
+              "Ptero_out", // file_name("Ptero_full.msh"),
               2,                //        degree_velocity(2),
               1,                //        degree_pressure(1),
               1.825e-5,         //        coeff_nu(1.825e-5),
@@ -31,6 +32,7 @@ namespace ns_sim_settings
     }
 
     SimulationSettings::SimulationSettings(const std::string file_name,
+    const std::string out_file_name,
                        const unsigned int degree_velocity,
                        const unsigned int degree_pressure,
                        const double coeff_nu,
@@ -48,6 +50,7 @@ namespace ns_sim_settings
                           const double coeff_relax_gamma,
                        const unsigned long total_time_steps,
                        const unsigned long time_steps_per_second) : file_name(file_name),
+                       out_file_name(out_file_name),
                         degree_velocity(degree_velocity),
 degree_pressure(degree_pressure),
 coeff_nu(coeff_nu),

@@ -24,12 +24,10 @@ int main(int argc, char *argv[])
     sim_settings.print();
   }
 
-  Problem problem(sim_settings);
+  NavierStokes problem(sim_settings);
 
   problem.setup();
-  problem.assemble();
-  problem.solveNewtonMethod();
-  //problem.solve();
+  problem.solve_newton();
   problem.output();
 
   return 0;

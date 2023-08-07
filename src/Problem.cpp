@@ -1,15 +1,22 @@
 #include "Problem.hpp"
 
-void get_current_coeff_nu() const
+double NavierStokes::get_current_coeff_nu() const
 {
   // For now
   return settings.coeff_nu;
 }
 
+double NavierStokes::get_current_inlet_velocity(const unsigned int component) const
+{
+  return settings.inlet_velocity_start[component] +
+         (double)(current_time_step)*settings.time_steps_per_second *
+             (settings.inlet_velocity_end[component] - settings.inlet_velocity_start[component]);
+}
+
 void NavierStokes::increment_time_step()
 {
   ++current_time_step;
-  inlet_velocity.advance_time(1.0/settings.time_steps_per_second);
+  inlet_velocity.advance_time(1.0 / settings.time_steps_per_second);
 }
 
 void NavierStokes::setup()
@@ -242,7 +249,7 @@ void NavierStokes::assemble_system(const bool initial_step)
         {
           // Viscosity term.
           cell_matrix(i, j) +=
-              get_current_coeff_nu() * 
+              get_current_coeff_nu() *
               scalar_product(fe_values[velocity].gradient(i, q),
                              fe_values[velocity].gradient(j, q)) *
               fe_values.JxW(q);

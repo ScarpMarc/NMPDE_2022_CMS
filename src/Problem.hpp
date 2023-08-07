@@ -82,35 +82,34 @@ public:
     class InletVelocity : public Function<dim>
     {
     public:
-        InletVelocity()
-            : Function<dim>(dim + 1)
+        InletVelocity(NavierStokes &parent)
+            : Function<dim>(dim + 1), parent(parent)
         {
         }
 
         virtual void
-        vector_value(const Point<dim> &p, Vector<double> &values) const override
+        vector_value(const Point<dim> /*&p*/, Vector<double> &values) const
         {
             // values[0] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
-            values[0] = alpha;
-            for (unsigned int i = 1; i < dim + 1; ++i)
-                values[i] = 0.0;
+            values[3] = 0.0; // Unused component
+            for (unsigned int i = 0; i < dim; ++i)
+                values[i] = parent.get_current_inlet_velocity(i);
         }
 
         virtual double
-        value(const Point<dim> &p, const unsigned int component = 0) const override
+        value(const Point<dim> /*&p*/, const unsigned int component = 0) const
         {
             if (component == 3) // Unused component
                 // return -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
                 return 0.0;
             else
             {
-                return settings.inlet_velocity_start[component] + 
-                (double)(settings.current_time_step) * 
-                settings.time_steps_per_second * 
-                (settings.inlet_velocity_end[component] - settings.inlet_velocity_start[component]);
+                return parent.get_current_inlet_velocity(component);
             }
-                
         }
+
+    protected:
+        NavierStokes &parent;
     };
 
     // Since we're working with block matrices, we need to make our own
@@ -134,8 +133,8 @@ public:
     };
 
     // Constructor.
-    NavierStokes(const SimulationSettings &settings)
-        : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), settings(settings) mesh(MPI_COMM_WORLD)
+    NavierStokes(const ns_sim_settings::SimulationSettings &settings)
+        : settings(settings), mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), inlet_velocity(*this), mesh(MPI_COMM_WORLD)
     {
     }
 
@@ -162,14 +161,16 @@ public:
 
     void increment_time_step();
 
-    void get_current_coeff_nu() const;
+    double get_current_coeff_nu() const;
+
+    double get_current_inlet_velocity(const unsigned int component = 0) const;
 
 protected:
     // MPI parallel. /////////////////////////////////////////////////////////////
 
     unsigned long current_time_step = 0;
 
-    SimulationSettings settings;
+    ns_sim_settings::SimulationSettings settings;
 
     // Number of MPI processes.
     const unsigned int mpi_size;
@@ -183,7 +184,7 @@ protected:
     // Problem definition. ///////////////////////////////////////////////////////
 
     // Kinematic viscosity [m2/s].
-    //const double nu = 1;
+    // const double nu = 1;
 
     // Gamma parameter
     // const double gamma = 1.0;
@@ -200,7 +201,7 @@ protected:
     // Discretization. ///////////////////////////////////////////////////////////
 
     // Mesh refinement.
-    //const unsigned int N;
+    // const unsigned int N;
 
     // Polynomial degree used for velocity.
     // const unsigned int degree_velocity;
