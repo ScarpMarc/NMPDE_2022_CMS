@@ -15,14 +15,15 @@ namespace ns_sim_settings
               2.5e-3,           //        coeff_nu_start(2.5e-3),
               10,               //        coeff_nu_ramp_down_times(10),
               1.204,            //        coeff_rho(1.204),
-              {0.0, 10.0, 0.0}, //        inlet_velocity({0.0, 10.0, 0.0}),
-              {0.0, .1, 0.0},   //        inlet_velocity_increment_per_step({0.0, .1, 0.0}),
+              {0.0, 10.0, 0.0}, //        inlet_velocity_start({0.0, 10.0, 0.0}),
+              {0.0, 10, 0.0},   //        inlet_velocity_end({0.0, .1, 0.0}),
               10.0,             //        outlet_pressure(10.0),
               5000,             //        max_solver_iteration_amt(5000),
               1e-6,             //        desired_solver_precision(1e-6),
               1000,             //        max_newton_iteration_amt(1000),
               1e-6,             //        desired_newton_precision(1e-6),
               0.5,              //        theta(0.5),
+              1.0,              //        coeff_relax_gamma(1.0),
               100,              //        total_time_steps(100),
               10                //        time_steps_per_second(10)
           )
@@ -36,39 +37,46 @@ namespace ns_sim_settings
                        const double coeff_nu_start,
                        const unsigned int coeff_nu_ramp_down_times,
                        const double coeff_rho,
-                       const std::array<double, 3> inlet_velocity,
-                       const std::array<double, 3> inlet_velocity_increment_per_step,
+                       const std::array<double, 3> inlet_velocity_start,
+                       const std::array<double, 3> inlet_velocity_end,
                        const double outlet_pressure,
                        const unsigned int max_solver_iteration_amt,
                        const double desired_solver_precision,
                        const unsigned int max_newton_iteration_amt,
                        const double desired_newton_precision,
                        const double theta,
+                          const double coeff_relax_gamma,
                        const unsigned long total_time_steps,
                        const unsigned long time_steps_per_second) : file_name(file_name),
-                                                                    degree_velocity(degree_velocity),
-                                                                    degree_pressure(degree_pressure),
-                                                                    coeff_nu(coeff_nu),
-                                                                    coeff_nu_start(coeff_nu_start),
-                                                                    coeff_nu_ramp_down_times(coeff_nu_ramp_down_times),
-                                                                    coeff_rho(coeff_rho),
-                                                                    inlet_velocity(inlet_velocity),
-                                                                    inlet_velocity_increment_per_step(inlet_velocity_increment_per_step),
-                                                                    outlet_pressure(outlet_pressure),
-                                                                    max_solver_iteration_amt(max_solver_iteration_amt),
-                                                                    desired_solver_precision(desired_solver_precision),
-                                                                    max_newton_iteration_amt(max_newton_iteration_amt),
-                                                                    desired_newton_precision(desired_newton_precision),
-                                                                    theta(theta),
-                                                                    total_time_steps(total_time_steps),
-                                                                    time_steps_per_second(time_steps_per_second),
-                                                                    ramp_down_step_size(0.0),
-                                                                    advised_ramp_down_step_size(0.0)
+                        degree_velocity(degree_velocity),
+degree_pressure(degree_pressure),
+coeff_nu(coeff_nu),
+coeff_nu_start(coeff_nu_start),
+coeff_nu_ramp_down_times(coeff_nu_ramp_down_times),
+coeff_rho(coeff_rho),
+inlet_velocity_start(inlet_velocity_start),
+inlet_velocity_end(inlet_velocity_end),
+outlet_pressure(outlet_pressure),
+max_solver_iteration_amt(max_solver_iteration_amt),
+desired_solver_precision(desired_solver_precision),
+max_newton_iteration_amt(max_newton_iteration_amt),
+desired_newton_precision(desired_newton_precision),
+theta(theta),
+coeff_relax_gamma(coeff_relax_gamma),
+total_time_steps(total_time_steps),
+time_steps_per_second(time_steps_per_second),
+ramp_down_step_size(0.0),
+advised_ramp_down_step_size(0.0)
     {
         prm.declare_entry("file_name",
                           "Ptero_full.msh",
                           Patterns::FileName(),
                           " Mesh file name.");
+
+        prm.declare_entry("out_file_name",
+                          "Ptero_out",
+                          Patterns::FileName(),
+                          " Output file name.");
 
         prm.enter_subsection("Finite-element settings");
         {
@@ -111,14 +119,14 @@ namespace ns_sim_settings
 
         prm.enter_subsection("Inlet velocity");
         {
-            prm.declare_entry("inlet_velocity",
+            prm.declare_entry("inlet_velocity_start",
                               "0.0, 10.0, 0.0",
                               Patterns::List(Patterns::Double(0.0)),
-                              " Inlet velocity components [m/s]. ");
-            prm.declare_entry("inlet_velocity_increment_per_step",
-                              "0.0, 0.1, 0.0",
+                              " Inlet velocity components at time 0 [m/s]. ");
+            prm.declare_entry("inlet_velocity_end",
+                              "0.0, 10.1, 0.0",
                               Patterns::List(Patterns::Double(0.0)),
-                              " Inlet velocity increment per time step [m/s]. ");
+                              " Inlet velocity components at end time [m/s]. ");
         }
         prm.leave_subsection();
 
@@ -149,6 +157,10 @@ namespace ns_sim_settings
                               "0.5",
                               Patterns::Double(0.0, 1.0),
                               " Theta parameter for the time discretization. ");
+            prm.declare_entry("coeff_relax_gamma",
+                              "1.0",
+                              Patterns::Double(0.0),
+                              " Relaxation parameter for Netwon. ");
         }
 
         prm.enter_subsection("Time step data");
@@ -161,51 +173,6 @@ namespace ns_sim_settings
                               "10",
                               Patterns::Integer(1),
                               " Amount of time steps per second. ");
-        }
-        prm.leave_subsection();
-
-        prm.enter_subsection("Space discretization");
-        {
-            prm.declare_entry("n_of_refines",
-                              "0",
-                              Patterns::Integer(0, 15),
-                              " The number of global refines we do on the mesh. ");
-            prm.declare_entry("pressure_fe_degree",
-                              "1",
-                              Patterns::Integer(1, 5),
-                              " The polynomial degree for the pressure space. ");
-        }
-        prm.leave_subsection();
-
-        prm.enter_subsection("Data solve velocity");
-        {
-            prm.declare_entry(
-                "max_iterations",
-                "1000",
-                Patterns::Integer(1, 1000),
-                " The maximal number of iterations GMRES must make. ");
-            prm.declare_entry("eps",
-                              "1e-12",
-                              Patterns::Double(0.),
-                              " The stopping criterion. ");
-            prm.declare_entry("Krylov_size",
-                              "30",
-                              Patterns::Integer(1),
-                              " The size of the Krylov subspace to be used. ");
-            prm.declare_entry("off_diagonals",
-                              "60",
-                              Patterns::Integer(0),
-                              " The number of off-diagonal elements ILU must "
-                              "compute. ");
-            prm.declare_entry("diag_strength",
-                              "0.01",
-                              Patterns::Double(0.),
-                              " Diagonal strengthening coefficient. ");
-            prm.declare_entry("update_prec",
-                              "15",
-                              Patterns::Integer(1),
-                              " This number indicates how often we need to "
-                              "update the preconditioner");
         }
         prm.leave_subsection();
 
@@ -268,6 +235,9 @@ namespace ns_sim_settings
 
         prm.parse_input(file);
 
+        file_name = prm.get("file_name");
+        out_file_name = prm.get("out_file_name");
+
         prm.enter_subsection("Finite-element settings");
         {
             degree_velocity = prm.get_integer("degree_velocity");
@@ -291,19 +261,19 @@ namespace ns_sim_settings
 
         prm.enter_subsection("Inlet velocity");
         {
-            prm.enter_subsection("Components");
+            prm.enter_subsection("Start");
             {
-                inlet_velocity[0] = prm.get_double("x");
-                inlet_velocity[1] = prm.get_double("y");
-                inlet_velocity[2] = prm.get_double("z");
+                inlet_velocity_start[0] = prm.get_double("x");
+                inlet_velocity_start[1] = prm.get_double("y");
+                inlet_velocity_start[2] = prm.get_double("z");
             }
             prm.leave_subsection();
 
-            prm.enter_subsection("Increment per time step");
+            prm.enter_subsection("End");
             {
-                inlet_velocity_increment_per_step[0] = prm.get_double("x");
-                inlet_velocity_increment_per_step[1] = prm.get_double("y");
-                inlet_velocity_increment_per_step[2] = prm.get_double("z");
+                inlet_velocity_end[0] = prm.get_double("x");
+                inlet_velocity_end[1] = prm.get_double("y");
+                inlet_velocity_end[2] = prm.get_double("z");
             }
             prm.leave_subsection();
         }
@@ -323,6 +293,7 @@ namespace ns_sim_settings
             desired_newton_precision = prm.get_double("desired_newton_precision");
 
             theta = prm.get_double("theta");
+            coeff_relax_gamma = prm.get_double("coeff_relax_gamma");
         }
         prm.leave_subsection();
 

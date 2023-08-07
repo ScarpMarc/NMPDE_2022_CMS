@@ -14,41 +14,46 @@ namespace ns_sim_settings
     class SimulationSettings
     {
     public:
-        SimulationSettings(); 
+        SimulationSettings();
 
         SimulationSettings(const SimulationSettings &other) : SimulationSettings(other.file_name,
-                                                                                 other.degree_velocity,
+other.out_file_name,
+other.degree_velocity,
                                                                                  other.degree_pressure,
                                                                                  other.coeff_nu,
                                                                                  other.coeff_nu_start,
                                                                                  other.coeff_nu_ramp_down_times,
                                                                                  other.coeff_rho,
-                                                                                 other.inlet_velocity,
-                                                                                 other.inlet_velocity_increment_per_step,
+                                                                                 other.inlet_velocity_start,
+                                                                                 other.inlet_velocity_end,
                                                                                  other.outlet_pressure,
                                                                                  other.max_solver_iteration_amt,
                                                                                  other.desired_solver_precision,
                                                                                  other.max_newton_iteration_amt,
                                                                                  other.desired_newton_precision,
                                                                                  other.theta,
+                                                                                 other.coeff_relax_gamma,
                                                                                  other.total_time_steps,
                                                                                  other.time_steps_per_second) {}
 
         SimulationSettings(const std::string file_name,
+                            const std::string out_file_name,
                            const unsigned int degree_velocity,
                            const unsigned int degree_pressure,
                            const double coeff_nu,
                            const double coeff_nu_start,
                            const unsigned int coeff_nu_ramp_down_times,
                            const double coeff_rho,
-                           const std::array<double, 3> inlet_velocity,
-                           const std::array<double, 3> inlet_velocity_increment_per_step,
+                           const std::array<double, 3> inlet_velocity_start,
+                           const std::array<double, 3> inlet_velocity_end,
+                           // const std::array<double, 3> inlet_velocity_increment_per_step,
                            const double outlet_pressure,
                            const unsigned int max_solver_iteration_amt,
                            const double desired_solver_precision,
                            const unsigned int max_newton_iteration_amt,
                            const double desired_newton_precision,
                            const double theta,
+                           const double coeff_relax_gamma,
                            const unsigned long total_time_steps,
                            const unsigned long time_steps_per_second);
 
@@ -56,6 +61,7 @@ namespace ns_sim_settings
         void print() const;
 
         std::string file_name;
+        std::string out_file_name;
         unsigned int degree_velocity;
         unsigned int degree_pressure;
 
@@ -65,8 +71,8 @@ namespace ns_sim_settings
 
         double coeff_rho; // Density [kg/m^3]
 
-        std::array<double, 3> inlet_velocity;
-        std::array<double, 3> inlet_velocity_increment_per_step;
+        std::array<double, 3> inlet_velocity_start;
+        std::array<double, 3> inlet_velocity_end;
         double outlet_pressure;
 
         unsigned int max_solver_iteration_amt;
@@ -76,6 +82,7 @@ namespace ns_sim_settings
         double desired_newton_precision;
 
         double theta;
+        double coeff_relax_gamma;
 
         unsigned long total_time_steps;
         unsigned long time_steps_per_second;

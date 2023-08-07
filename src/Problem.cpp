@@ -1,7 +1,18 @@
 #include "Problem.hpp"
-#include "PreconditionBlockTriangular.hpp"
 
-void Problem::setup()
+void get_current_coeff_nu() const
+{
+  // For now
+  return settings.coeff_nu;
+}
+
+void NavierStokes::increment_time_step()
+{
+  ++current_time_step;
+  inlet_velocity.advance_time(1.0/settings.time_steps_per_second);
+}
+
+void NavierStokes::setup()
 {
   // Create the mesh.
   {
@@ -12,10 +23,10 @@ void Problem::setup()
     GridIn<dim> grid_in;
     grid_in.attach_triangulation(mesh_serial);
 
-    /*const std::string mesh_file_name =
-      "../mesh/mesh-step-" + std::to_string(N + 1) + ".msh";*/
+    const std::string mesh_file_name =
+        settings.file_name;
 
-    std::ifstream grid_in_file(simulation_settings.file_name);
+    std::ifstream grid_in_file(mesh_file_name);
     grid_in.read_msh(grid_in_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
@@ -33,8 +44,8 @@ void Problem::setup()
   {
     pcout << "Initializing the finite element space" << std::endl;
 
-    const FE_SimplexP<dim> fe_scalar_velocity(simulation_settings.degree_velocity);
-    const FE_SimplexP<dim> fe_scalar_pressure(simulation_settings.degree_pressure);
+    const FE_SimplexP<dim> fe_scalar_velocity(settings.degree_velocity);
+    const FE_SimplexP<dim> fe_scalar_pressure(settings.degree_pressure);
     fe = std::make_unique<FESystem<dim>>(fe_scalar_velocity,
                                          dim,
                                          fe_scalar_pressure,
@@ -154,20 +165,12 @@ void Problem::setup()
     residual_vector.reinit(block_owned_dofs, MPI_COMM_WORLD);
     pcout << "  Initializing the solution vector" << std::endl;
     solution_owned.reinit(block_owned_dofs, MPI_COMM_WORLD);
-    solution.reinit(block_owned_dofs, block_relevant_dofs, MPI_COMM_WORLD);
     delta_owned.reinit(block_owned_dofs, MPI_COMM_WORLD);
+    solution.reinit(block_owned_dofs, block_relevant_dofs, MPI_COMM_WORLD);
   }
 }
 
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-
-void Problem::assemble()
+void NavierStokes::assemble_system(const bool initial_step)
 {
   pcout << "===============================================" << std::endl;
   pcout << "Assembling the system" << std::endl;
@@ -193,25 +196,16 @@ void Problem::assemble()
 
   jacobian_matrix = 0.0;
   residual_vector = 0.0;
-  // This one just for the construction of the preconditioner
-  // (Should be built at every step of the Newton method)
   pressure_mass = 0.0;
-
-  // We use these vectors to store the old solution (i.e. at previous Newton
-  // iteration) and its gradient on quadrature nodes of the current cell:
-
-  // Tensor of rank 1 to store the local velocity solution at previous Newton step
-  //(vectorial field)
-  std::vector<Tensor<1, dim>> velocity_loc(n_q);
-  // Tensor of rank 2 to store the local velocity solution at previous Newton step
-  //(the grad of a vectorial field -> jacobian)
-  std::vector<Tensor<2, dim>> velocity_gradient_loc(n_q);
-
-  // Double to store the local pressure solution at previous Newton step
-  std::vector<double> pressure_loc(n_q);
 
   FEValuesExtractors::Vector velocity(0);
   FEValuesExtractors::Scalar pressure(dim);
+
+  // We use these vectors to store the old solution (i.e. at previous Newton
+  // iteration) and its gradient on quadrature nodes of the current cell.
+  std::vector<Tensor<1, dim>> velocity_values_loc(n_q);
+  std::vector<Tensor<2, dim>> velocity_gradient_loc(n_q);
+  std::vector<double> pressure_values_loc(n_q);
 
   for (const auto &cell : dof_handler.active_cell_iterators())
   {
@@ -229,9 +223,9 @@ void Problem::assemble()
     // (stored inside solution) on the quadrature nodes of the current
     // cell. This can be accomplished through
     // FEValues::get_function_values and FEValues::get_function_gradients.
-    fe_values[velocity].get_function_values(solution, velocity_loc);
+    fe_values[velocity].get_function_values(solution, velocity_values_loc);
     fe_values[velocity].get_function_gradients(solution, velocity_gradient_loc);
-    fe_values[pressure].get_function_values(solution, pressure_loc);
+    fe_values[pressure].get_function_values(solution, pressure_values_loc);
 
     for (unsigned int q = 0; q < n_q; ++q)
     {
@@ -248,71 +242,87 @@ void Problem::assemble()
         {
           // Viscosity term.
           cell_matrix(i, j) +=
-              simulation_settings.coeff_nu *
-              scalar_product(fe_values[velocity].gradient(j, q),
-                             fe_values[velocity].gradient(i, q)) *
+              get_current_coeff_nu() * 
+              scalar_product(fe_values[velocity].gradient(i, q),
+                             fe_values[velocity].gradient(j, q)) *
               fe_values.JxW(q);
 
-          // Convective term
+          // First Non-liner term contribution in the momentum equation.
           cell_matrix(i, j) +=
-              (velocity_gradient_loc[q] *
-                   fe_values[velocity].value(j, q) *
-                   fe_values[velocity].value(i, q) +
-               fe_values[velocity].gradient(j, q) *
-                   velocity_loc[q] *
-                   fe_values[velocity].value(i, q)) *
+              scalar_product(
+                  fe_values[velocity].value(i, q),
+                  velocity_gradient_loc[q] *
+                      fe_values[velocity].value(j, q)) *
+              fe_values.JxW(q);
+
+          // Second Non-liner term contribution in the momentum equation.
+          cell_matrix(i, j) +=
+              scalar_product(
+                  fe_values[velocity].value(j, q),
+                  fe_values[velocity].gradient(i, q) *
+                      velocity_values_loc[q]) *
               fe_values.JxW(q);
 
           // Pressure term in the momentum equation.
+          cell_matrix(i, j) -= fe_values[velocity].divergence(i, q) *
+                               fe_values[pressure].value(j, q) *
+                               fe_values.JxW(q);
+
+          // Pressure term in the continuity equation.
           cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
                                fe_values[pressure].value(i, q) *
                                fe_values.JxW(q);
 
-          // Pressure term in the continuity equation.
-          cell_matrix(i, j) -= fe_values[pressure].value(j, q) *
-                               fe_values[velocity].divergence(i, q) *
-                               fe_values.JxW(q);
-
-          // Term given by the special-case preconditioer
-          cell_matrix(i, j) -= gamma *
-                               fe_values[velocity].divergence(j, q) *
-                               fe_values[velocity].divergence(i, q) *
-                               fe_values.JxW(q);
+          // Grad-div stabilization term.
+          cell_matrix(i, j) +=
+              settings.coeff_relax_gamma *
+              scalar_product(fe_values[velocity].gradient(i, q),
+                             fe_values[velocity].gradient(j, q)) *
+              fe_values.JxW(q);
 
           // Pressure mass matrix.
           cell_pressure_mass_matrix(i, j) +=
               fe_values[pressure].value(i, q) *
-              fe_values[pressure].value(j, q) / simulation_settings.coeff_nu * fe_values.JxW(q);
+              fe_values[pressure].value(j, q) * fe_values.JxW(q);
         }
 
-        // Get the divergence of the previous
+        // Local contributions to the residual vector:
 
-        double velocity_divergence_loc =
-            trace(velocity_gradient_loc[q]);
+        // Viscosity term contribution.
+        cell_rhs(i) -= get_current_coeff_nu() *
+                       scalar_product(fe_values[velocity].gradient(i, q),
+                                      velocity_gradient_loc[q]) *
+                       fe_values.JxW(q);
+        // Non-linear term contribution.
+        cell_rhs(i) -= scalar_product(
+                           fe_values[velocity].value(i, q),
+                           velocity_gradient_loc[q] *
+                               velocity_values_loc[q]) *
+                       fe_values.JxW(q);
 
-        // Forcing term.
+        // Pressure term contribution in momentum equation.
+        cell_rhs(i) += fe_values[velocity].divergence(i, q) *
+                       pressure_values_loc[q] * fe_values.JxW(q);
 
-        cell_rhs(i) +=
-            ( // Viscosity term
-                simulation_settings.coeff_nu *
-                    scalar_product(velocity_gradient_loc[q],
-                                   fe_values[velocity].gradient(i, q)) *
-                    // Convolution term
-                    -velocity_gradient_loc[q] *
-                    velocity_loc[q] *
-                    fe_values[velocity].value(i, q)
-                // Pressure term
-                +
-                pressure_loc[q] *
-                    fe_values[velocity].divergence(i, q) +
-                velocity_divergence_loc *
-                    fe_values[pressure].value(i, q) -
-                gamma *
-                    velocity_divergence_loc *
-                    fe_values[velocity].divergence(i, q) -
-                scalar_product(forcing_term_tensor,
-                               fe_values[velocity].value(i, q))) *
-            fe_values.JxW(q);
+        // Pressure term contribution in continuity equation.
+        // For this one compute the velocity divergence on the fly
+        // using the gradient of the velocity.
+        double velocity_divergence_loc = trace(velocity_gradient_loc[q]);
+
+        cell_rhs(i) += velocity_divergence_loc *
+                       fe_values[pressure].value(i, q) *
+                       fe_values.JxW(q);
+
+        // Grad-div stabilization term contribution.
+        cell_rhs(i) -= settings.coeff_relax_gamma *
+                       velocity_divergence_loc *
+                       fe_values[velocity].divergence(i, q) *
+                       fe_values.JxW(q);
+
+        // Forcing term contribution.
+        cell_rhs(i) += scalar_product(forcing_term_tensor,
+                                      fe_values[velocity].value(i, q)) *
+                       fe_values.JxW(q);
       }
     }
 
@@ -322,7 +332,7 @@ void Problem::assemble()
       for (unsigned int f = 0; f < cell->n_faces(); ++f)
       {
         if (cell->face(f)->at_boundary() &&
-            cell->face(f)->boundary_id() == 2)
+            cell->face(f)->boundary_id() == 1)
         {
           fe_face_values.reinit(cell, f);
 
@@ -331,7 +341,7 @@ void Problem::assemble()
             for (unsigned int i = 0; i < dofs_per_cell; ++i)
             {
               cell_rhs(i) +=
-                  -simulation_settings.outlet_pressure *
+                  settings.outlet_pressure *
                   scalar_product(fe_face_values.normal_vector(q),
                                  fe_face_values[velocity].value(i,
                                                                 q)) *
@@ -358,10 +368,17 @@ void Problem::assemble()
     std::map<types::global_dof_index, double> boundary_values;
     std::map<types::boundary_id, const Function<dim> *> boundary_functions;
 
+    Functions::ZeroFunction<dim> zero_function(dim + 1);
+
     // We interpolate first the inlet velocity condition alone, then the wall
     // condition alone, so that the latter "win" over the former where the two
     // boundaries touch.
-    boundary_functions[1] = &inlet_velocity;
+    // That is, only if the iteration of the Newton method is the first one.
+    // Otherwise the Dirichet BCs for the inlet surface in the other steps are all
+    // zero (no increase in the inlet velocity).
+    boundary_functions[0] = &zero_function;
+    if (initial_step)
+      boundary_functions[0] = &inlet_velocity;
     VectorTools::interpolate_boundary_values(dof_handler,
                                              boundary_functions,
                                              boundary_values,
@@ -369,11 +386,9 @@ void Problem::assemble()
                                                  {true, true, true, false}));
 
     boundary_functions.clear();
-    Functions::ZeroFunction<dim> zero_function(dim + 1);
-    boundary_functions[0] = &zero_function; // Body
-    boundary_functions[3] = &zero_function; // Slip
-    boundary_functions[4] = &zero_function; // Wall
-
+    // std::vector<double> values = {0.0, 1.0, 0.0, 0.0};
+    boundary_functions[2] = &zero_function;
+    boundary_functions[3] = &zero_function;
     VectorTools::interpolate_boundary_values(dof_handler,
                                              boundary_functions,
                                              boundary_values,
@@ -381,112 +396,54 @@ void Problem::assemble()
                                                  {true, true, true, false}));
 
     MatrixTools::apply_boundary_values(
-        boundary_values, jacobian_matrix, solution, residual_vector, false);
+        boundary_values, jacobian_matrix, delta_owned, residual_vector, false);
   }
 }
 
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-
-void Problem::solveLinearSystem()
+void NavierStokes::solve_newton_step()
 {
-  /*
-  // IN : jacobian_matrix, residual_vector, preconditionr
-  // OUT: delta_owned
-
-  // inizializzo il controllo del solver
-  SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
-
-  // inizializzo il solver
-  SolverCG<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
-
-  // definisco un precondizionatore
-  TrilinosWrappers::PreconditionSSOR      preconditioner;
-  preconditioner.initialize(
-    jacobian_matrix, TrilinosWrappers::PreconditionSSOR::AdditionalData(1.0));
-
-  solver.solve(jacobian_matrix,
-               delta_owned,
-               residual_vector,
-               preconditioner);
-  pcout << "  " << solver_control.last_step() << " CG iterations" << std::endl;
-  */
-
-  pcout << "===============================================" << std::endl;
-
-  SolverControl solver_control(simulation_settings.max_solver_iteration_amt, simulation_settings.desired_solver_precision * residual_vector.l2_norm());
+  SolverControl solver_control(settings.desired_solver_precision, settings.max_solver_iteration_amt * residual_vector.l2_norm());
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
-  // PreconditionBlockDiagonal preconditioner;
-  // preconditioner.initialize(system_matrix.block(0, 0),
-  //                           pressure_mass.block(1, 1));
-
   PreconditionBlockTriangular preconditioner;
-  preconditioner.initialize(jacobian_matrix.block(0, 0),
+  preconditioner.initialize(settings.coeff_relax_gamma,
+                            get_current_coeff_nu(),
+                            jacobian_matrix.block(0, 0),
                             pressure_mass.block(1, 1),
-                            jacobian_matrix.block(0, 1),
-                            simulation_settings.coeff_nu,
-                            gamma);
+                            jacobian_matrix.block(0, 1));
 
-  pcout << "Solving the linear system" << std::endl;
-  solver.solve(jacobian_matrix,
-               delta_owned,
-               residual_vector,
-               preconditioner);
+  solver.solve(jacobian_matrix, delta_owned, residual_vector, preconditioner);
   pcout << "  " << solver_control.last_step() << " GMRES iterations"
         << std::endl;
 }
 
-void Problem::solveNewtonMethod()
+void NavierStokes::solve_newton()
 {
   pcout << "===============================================" << std::endl;
-  // parametri
-  const unsigned int n_max_iters = simulation_settings.max_newton_iteration_amt;
-  const double residual_tolerance = simulation_settings.desired_newton_precision;
+
+  const unsigned int n_max_iters = settings.max_newton_iteration_amt;
+  const double residual_tolerance = settings.desired_newton_precision;
 
   unsigned int n_iter = 0;
   double residual_norm = residual_tolerance + 1;
-
-  // We apply the boundary conditions to the initial guess (which is stored in
-  // solution_owned and solution).
-  {
-    IndexSet dirichlet_dofs = DoFTools::extract_boundary_dofs(dof_handler);
-
-    // function_g.set_time(time);
-
-    TrilinosWrappers::MPI::BlockVector vector_dirichlet(solution_owned);
-    VectorTools::interpolate(dof_handler,
-                             inlet_velocity,
-                             vector_dirichlet);
-
-    for (const auto &idx : dirichlet_dofs)
-      solution_owned[idx] = vector_dirichlet[idx];
-
-    solution_owned.compress(VectorOperation::insert);
-    solution = solution_owned;
-  }
+  bool initial_step = true;
 
   while (n_iter < n_max_iters && residual_norm > residual_tolerance)
   {
-    pcout << "Newton: back to assembly" << std::endl;
-    assemble();                                // riassemblo
-    residual_norm = residual_vector.l2_norm(); // calcolo la norma residuo
+    assemble_system(initial_step);
+    initial_step = false;
+    residual_norm = residual_vector.l2_norm();
 
-    pcout << "  Newton iteration " << n_iter << "/" << n_max_iters
+    pcout << "Newton iteration " << n_iter << "/" << n_max_iters
           << " - ||r|| = " << std::scientific << std::setprecision(6)
-          << residual_norm << std::flush << std::endl;
+          << residual_norm << std::flush;
 
     // We actually solve the system only if the residual is larger than the
     // tolerance.
     if (residual_norm > residual_tolerance)
     {
-      solveLinearSystem();
+      solve_newton_step();
 
       solution_owned += delta_owned;
       solution = solution_owned;
@@ -498,9 +455,11 @@ void Problem::solveNewtonMethod()
 
     ++n_iter;
   }
+
+  pcout << "===============================================" << std::endl;
 }
 
-void Problem::output()
+void NavierStokes::output() const
 {
   pcout << "===============================================" << std::endl;
 
@@ -528,7 +487,7 @@ void Problem::output()
 
   data_out.build_patches();
 
-  const std::string output_file_name = "output-Ptero";
+  const std::string output_file_name = settings.out_file_name;
 
   DataOutBase::DataOutFilter data_filter(
       DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
