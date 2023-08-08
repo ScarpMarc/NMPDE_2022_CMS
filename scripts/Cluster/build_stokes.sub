@@ -6,7 +6,7 @@
 
 source /u/par3/hpc.bashrc
 
-cp -R /u/par3/repos/NMPDE_2022_CMS/build /scratch/hpc/par3/build
+cp -R /u/par3/repos/NMPDE_2022_CMS/build /scratch/hpc/par3/
 
 #cp -R /u/par3/repos/NMPDE_2022_CMS/mesh /scratch/hpc/par3/mesh
 
