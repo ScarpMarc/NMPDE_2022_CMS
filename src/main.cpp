@@ -9,8 +9,6 @@ int main(int argc, char *argv[])
   ns_sim_settings::SimulationSettings sim_settings;
   std::string settings_file_name;
 
-  settings_file_name = argv[1];
-
   int mpi_ID;
   int mpi_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_ID);
@@ -18,6 +16,7 @@ int main(int argc, char *argv[])
 
   if (argc > 1)
   {
+    settings_file_name = argv[1];
     if (mpi_ID == 0)
     {
       std::cout << "Loading settings from file: " << settings_file_name << std::endl;

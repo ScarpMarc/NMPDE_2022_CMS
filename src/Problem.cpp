@@ -1,15 +1,15 @@
 #include "Problem.hpp"
 
-double NavierStokes::get_current_coeff_nu()
+double NavierStokes::get_current_coeff_nu() const
 {
   // For now
   return settings.get_coeff_nu();
 }
 
-double NavierStokes::get_current_inlet_velocity(const unsigned int component)
+double NavierStokes::get_current_inlet_velocity(const unsigned int component) const
 {
   return settings.get_inlet_velocity_start()[component] +
-         (double)(current_time_step)*settings.get_time_steps_per_second() *
+         ((double)current_time_step) * settings.get_time_steps_per_second() *
              (settings.get_inlet_velocity_end()[component] - settings.get_inlet_velocity_start()[component]);
 }
 
@@ -182,6 +182,12 @@ void NavierStokes::assemble_system(const bool initial_step)
   pcout << "===============================================" << std::endl;
   pcout << "Assembling the system" << std::endl;
 
+  //pcout << "nu = " << get_current_coeff_nu() << std::endl
+  //        << "gamma = " << settings.get_coeff_relax_gamma() << std::endl
+  //        << "inlet velocity = " << get_current_inlet_velocity(0) << ", "
+  //        << get_current_inlet_velocity(1) << ", " << get_current_inlet_velocity(2) << std::endl
+  //        << "outlet pressure = " << settings.get_outlet_pressure() << std::endl;
+
   const unsigned int dofs_per_cell = fe->dofs_per_cell;
   const unsigned int n_q = quadrature->size();
   const unsigned int n_q_face = quadrature_face->size();
@@ -279,7 +285,6 @@ void NavierStokes::assemble_system(const bool initial_step)
           cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
                                fe_values[pressure].value(i, q) *
                                fe_values.JxW(q);
-
           // Grad-div stabilization term.
           cell_matrix(i, j) +=
               settings.get_coeff_relax_gamma() *
@@ -409,9 +414,12 @@ void NavierStokes::assemble_system(const bool initial_step)
 
 void NavierStokes::solve_newton_step()
 {
-  SolverControl solver_control(settings.get_desired_solver_precision(), settings.get_max_solver_iteration_amt() * residual_vector.l2_norm());
+  SolverControl solver_control(settings.get_max_solver_iteration_amt(), settings.get_desired_solver_precision() * residual_vector.l2_norm());
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
+
+  //double _gamma = settings.get_coeff_relax_gamma();
+  //double _nu = get_current_coeff_nu();
 
   PreconditionBlockTriangular preconditioner;
   preconditioner.initialize(settings.get_coeff_relax_gamma(),

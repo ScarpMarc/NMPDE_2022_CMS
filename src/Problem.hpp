@@ -161,12 +161,9 @@ public:
 
     void increment_time_step();
 
-    /* These call prm internally; since it has to call enter_subsection, we
-     * cannot make these const. 
-    */    
-    double get_current_coeff_nu();
+    double get_current_coeff_nu() const;
 
-    double get_current_inlet_velocity(const unsigned int component = 0);
+    double get_current_inlet_velocity(const unsigned int component = 0) const;
 
 protected:
     // MPI parallel. /////////////////////////////////////////////////////////////
