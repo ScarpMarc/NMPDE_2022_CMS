@@ -16,22 +16,12 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_ID);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-  if (mpi_ID == 0)
-  {
-    if (argc > 1)
-    {
-      // Load from file in the future. For now throw an error
-      // sym_settings = load_settings(argv[1]);
-    }
-  }
-
-  if (mpi_ID == 0)
-  {
-    std::cout << "Loading settings from file: " << settings_file_name << std::endl;
-  }
-
   if (argc > 1)
   {
+    if (mpi_ID == 0)
+    {
+      std::cout << "Loading settings from file: " << settings_file_name << std::endl;
+    }
     sim_settings.read_data(settings_file_name);
   }
 
