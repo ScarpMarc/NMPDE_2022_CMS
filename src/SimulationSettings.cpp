@@ -130,18 +130,18 @@ namespace ns_sim_settings
         {
             prm.declare_entry("inlet_velocity_start",
                               "10.0, 0.0, 0.0",
-                              Patterns::List(Patterns::Double(0.0), 3, 3),
+                              Patterns::List(Patterns::Double(Patterns::Double::min_double_value), 3, 3),
                               " Inlet velocity components at time 0 [m/s]. ");
             prm.declare_entry("inlet_velocity_end",
                               "10.0, 0.0, 0.0",
-                              Patterns::List(Patterns::Double(0.0), 3, 3),
+                              Patterns::List(Patterns::Double(Patterns::Double::min_double_value), 3, 3),
                               " Inlet velocity components at end time [m/s]. ");
         }
         prm.leave_subsection();
 
         prm.declare_entry("outlet_pressure",
                           "10.0",
-                          Patterns::Double(0.0),
+                          Patterns::Double(Patterns::Double::min_double_value),
                           " Outlet pressure [Pa]. ");
 
         prm.enter_subsection("Solver settings");
