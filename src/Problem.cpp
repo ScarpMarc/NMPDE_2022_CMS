@@ -3,20 +3,20 @@
 double NavierStokes::get_current_coeff_nu()
 {
   // For now
-  return settings.coeff_nu();
+  return settings.get_coeff_nu();
 }
 
 double NavierStokes::get_current_inlet_velocity(const unsigned int component)
 {
-  return settings.inlet_velocity_start()[component] +
-         (double)(current_time_step)*settings.time_steps_per_second() *
-             (settings.inlet_velocity_end()[component] - settings.inlet_velocity_start()[component]);
+  return settings.get_inlet_velocity_start()[component] +
+         (double)(current_time_step)*settings.get_time_steps_per_second() *
+             (settings.get_inlet_velocity_end()[component] - settings.get_inlet_velocity_start()[component]);
 }
 
 void NavierStokes::increment_time_step()
 {
   ++current_time_step;
-  inlet_velocity.advance_time(1.0 / settings.time_steps_per_second());
+  inlet_velocity.advance_time(1.0 / settings.get_time_steps_per_second());
 }
 
 void NavierStokes::setup()
@@ -31,7 +31,7 @@ void NavierStokes::setup()
     grid_in.attach_triangulation(mesh_serial);
 
     const std::string mesh_file_name =
-        settings.file_name();
+        settings.get_file_name();
 
     std::ifstream grid_in_file(mesh_file_name);
     grid_in.read_msh(grid_in_file);
@@ -51,8 +51,8 @@ void NavierStokes::setup()
   {
     pcout << "Initializing the finite element space" << std::endl;
 
-    const FE_SimplexP<dim> fe_scalar_velocity(settings.degree_velocity());
-    const FE_SimplexP<dim> fe_scalar_pressure(settings.degree_pressure());
+    const FE_SimplexP<dim> fe_scalar_velocity(settings.get_degree_velocity());
+    const FE_SimplexP<dim> fe_scalar_pressure(settings.get_degree_pressure());
     fe = std::make_unique<FESystem<dim>>(fe_scalar_velocity,
                                          dim,
                                          fe_scalar_pressure,
@@ -282,7 +282,7 @@ void NavierStokes::assemble_system(const bool initial_step)
 
           // Grad-div stabilization term.
           cell_matrix(i, j) +=
-              settings.coeff_relax_gamma() *
+              settings.get_coeff_relax_gamma() *
               scalar_product(fe_values[velocity].gradient(i, q),
                              fe_values[velocity].gradient(j, q)) *
               fe_values.JxW(q);
@@ -321,7 +321,7 @@ void NavierStokes::assemble_system(const bool initial_step)
                        fe_values.JxW(q);
 
         // Grad-div stabilization term contribution.
-        cell_rhs(i) -= settings.coeff_relax_gamma() *
+        cell_rhs(i) -= settings.get_coeff_relax_gamma() *
                        velocity_divergence_loc *
                        fe_values[velocity].divergence(i, q) *
                        fe_values.JxW(q);
@@ -348,7 +348,7 @@ void NavierStokes::assemble_system(const bool initial_step)
             for (unsigned int i = 0; i < dofs_per_cell; ++i)
             {
               cell_rhs(i) +=
-                  settings.outlet_pressure() *
+                  settings.get_outlet_pressure() *
                   scalar_product(fe_face_values.normal_vector(q),
                                  fe_face_values[velocity].value(i,
                                                                 q)) *
@@ -409,12 +409,12 @@ void NavierStokes::assemble_system(const bool initial_step)
 
 void NavierStokes::solve_newton_step()
 {
-  SolverControl solver_control(settings.desired_solver_precision(), settings.max_solver_iteration_amt() * residual_vector.l2_norm());
+  SolverControl solver_control(settings.get_desired_solver_precision(), settings.get_max_solver_iteration_amt() * residual_vector.l2_norm());
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
   PreconditionBlockTriangular preconditioner;
-  preconditioner.initialize(settings.coeff_relax_gamma(),
+  preconditioner.initialize(settings.get_coeff_relax_gamma(),
                             get_current_coeff_nu(),
                             jacobian_matrix.block(0, 0),
                             pressure_mass.block(1, 1),
@@ -429,8 +429,8 @@ void NavierStokes::solve_newton()
 {
   pcout << "===============================================" << std::endl;
 
-  const unsigned int n_max_iters = settings.max_newton_iteration_amt();
-  const double residual_tolerance = settings.desired_newton_precision();
+  const unsigned int n_max_iters = settings.get_max_newton_iteration_amt();
+  const double residual_tolerance = settings.get_desired_newton_precision();
 
   unsigned int n_iter = 0;
   double residual_norm = residual_tolerance + 1;
@@ -494,7 +494,7 @@ void NavierStokes::output() const
 
   data_out.build_patches();
 
-  const std::string output_file_name = settings.out_file_name();
+  const std::string output_file_name = settings.get_out_file_name();
 
   DataOutBase::DataOutFilter data_filter(
       DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,

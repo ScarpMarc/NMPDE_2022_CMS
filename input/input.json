@@ -1,6 +1,6 @@
 {
-    "file_5fname": "Ptero_full.msh",
-    "out_5ffile_5fname": "Ptero_out",
+    "file_5fname": "cylinder3d.msh",
+    "out_5ffile_5fname": "cylinder_out",
     "outlet_5fpressure": "10.0",
     "output_5finterval": "1",
     "verbose": "true",

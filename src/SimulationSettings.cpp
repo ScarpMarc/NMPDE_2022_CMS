@@ -1,6 +1,7 @@
 #include "SimulationSettings.hpp"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 using namespace dealii;
 
@@ -129,11 +130,11 @@ namespace ns_sim_settings
         {
             prm.declare_entry("inlet_velocity_start",
                               "10.0, 0.0, 0.0",
-                              Patterns::List(Patterns::Double(0.0)),
+                              Patterns::List(Patterns::Double(0.0), 3, 3),
                               " Inlet velocity components at time 0 [m/s]. ");
             prm.declare_entry("inlet_velocity_end",
                               "10.0, 0.0, 0.0",
-                              Patterns::List(Patterns::Double(0.0)),
+                              Patterns::List(Patterns::Double(0.0), 3, 3),
                               " Inlet velocity components at end time [m/s]. ");
         }
         prm.leave_subsection();
@@ -196,6 +197,8 @@ namespace ns_sim_settings
                           Patterns::Integer(1),
                           " This indicates between how many time steps we print "
                           "the solution. ");
+
+        update_variables();
     }
 
     void SimulationSettings::print() const
@@ -209,14 +212,9 @@ namespace ns_sim_settings
         sim_settings.print();
     }
 
-    void SimulationSettings::read_data(const std::string &filename)
+    void SimulationSettings::update_variables()
     {
-        std::ifstream file(filename, std::ios::in);
-        AssertThrow(file, ExcFileNotOpen(filename));
-
-        prm.parse_input_from_json(file);
-
-        /*file_name = prm.get("file_name");
+        file_name = prm.get("file_name");
         out_file_name = prm.get("out_file_name");
 
         prm.enter_subsection("Finite-element settings");
@@ -230,40 +228,37 @@ namespace ns_sim_settings
         {
             prm.enter_subsection("Viscosity");
             {
-                coeff_nu = prm.get_double("nu");
-                coeff_nu_start = prm.get_double("nu_start");
-                coeff_nu_ramp_down_times = prm.get_integer("nu_ramp_down_times");
+                coeff_nu = prm.get_double("coeff_nu");
+                coeff_nu_start = prm.get_double("coeff_nu_start");
+                coeff_nu_ramp_down_times = prm.get_integer("coeff_nu_ramp_down_times");
             }
             prm.leave_subsection();
 
-            coeff_rho = prm.get_double("rho");
+            coeff_rho = prm.get_double("coeff_rho");
         }
         prm.leave_subsection();
 
         prm.enter_subsection("Inlet velocity");
         {
-            prm.enter_subsection("Start");
-            {
-                inlet_velocity_start[0] = prm.get_double("x");
-                inlet_velocity_start[1] = prm.get_double("y");
-                inlet_velocity_start[2] = prm.get_double("z");
-            }
-            prm.leave_subsection();
+            std::istringstream temp;
 
-            prm.enter_subsection("End");
-            {
-                inlet_velocity_end[0] = prm.get_double("x");
-                inlet_velocity_end[1] = prm.get_double("y");
-                inlet_velocity_end[2] = prm.get_double("z");
-            }
-            prm.leave_subsection();
+            temp.str(prm.get("inlet_velocity_start"));
+
+            for (unsigned int i = 0; i < 3; ++i)
+                temp >> inlet_velocity_start[i];
+
+            temp.clear();
+            
+            temp.str(prm.get("inlet_velocity_end"));
+
+            for (unsigned int i = 0; i < 3; ++i)
+                temp >> inlet_velocity_end[i];
+
+            temp.clear();
         }
         prm.leave_subsection();
 
-        prm.enter_subsection("Outlet pressure");
-        {
-            outlet_pressure = prm.get_double("p");
-        }
+        outlet_pressure = prm.get_double("outlet_pressure");
 
         prm.enter_subsection("Solver settings");
         {
@@ -278,12 +273,22 @@ namespace ns_sim_settings
         }
         prm.leave_subsection();
 
-        prm.enter_subsection("Time settings");
+        prm.enter_subsection("Time step data");
         {
             total_time_steps = prm.get_integer("total_time_steps");
             time_steps_per_second = prm.get_double("time_steps_per_second");
         }
-        prm.leave_subsection();*/
+        prm.leave_subsection();
+    }
+
+    void SimulationSettings::read_data(const std::string &filename)
+    {
+        std::ifstream file(filename, std::ios::in);
+        AssertThrow(file, ExcFileNotOpen(filename));
+
+        prm.parse_input_from_json(file);
+
+        update_variables();
 
         file.close();
     }
