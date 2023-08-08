@@ -133,7 +133,7 @@ public:
     };
 
     // Constructor.
-    NavierStokes(const ns_sim_settings::SimulationSettings &settings)
+    NavierStokes(ns_sim_settings::SimulationSettings &settings)
         : settings(settings), mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), inlet_velocity(*this), mesh(MPI_COMM_WORLD)
     {
     }
@@ -161,16 +161,19 @@ public:
 
     void increment_time_step();
 
-    double get_current_coeff_nu() const;
+    /* These call prm internally; since it has to call enter_subsection, we
+     * cannot make these const. 
+    */    
+    double get_current_coeff_nu();
 
-    double get_current_inlet_velocity(const unsigned int component = 0) const;
+    double get_current_inlet_velocity(const unsigned int component = 0);
 
 protected:
     // MPI parallel. /////////////////////////////////////////////////////////////
 
     unsigned long current_time_step = 0;
 
-    ns_sim_settings::SimulationSettings settings;
+    ns_sim_settings::SimulationSettings& settings;
 
     // Number of MPI processes.
     const unsigned int mpi_size;

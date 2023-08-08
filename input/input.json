@@ -1,0 +1,35 @@
+{
+    "file_5fname": "Ptero_full.msh",
+    "out_5ffile_5fname": "Ptero_out",
+    "outlet_5fpressure": "10.0",
+    "output_5finterval": "1",
+    "verbose": "true",
+    "Finite_2delement_20settings": {
+        "degree_5fpressure": "1",
+        "degree_5fvelocity": "2"
+    },
+    "Inlet_20velocity": {
+        "inlet_5fvelocity_5fend": "10.0, 0.0, 0.0",
+        "inlet_5fvelocity_5fstart": "10.0, 0.0, 0.0"
+    },
+    "Physical_20coefficients": {
+        "coeff_5frho": "1.204",
+        "Viscosity": {
+            "coeff_5fnu": "1",
+            "coeff_5fnu_5framp_5fdown_5ftimes": "10",
+            "coeff_5fnu_5fstart": "2.5e-3"
+        }
+    },
+    "Solver_20settings": {
+        "coeff_5frelax_5fgamma": "1.0",
+        "desired_5fnewton_5fprecision": "1e-6",
+        "desired_5fsolver_5fprecision": "1e-6",
+        "max_5fnewton_5fiteration_5famt": "1000",
+        "max_5fsolver_5fiteration_5famt": "5000",
+        "theta": "0.5"
+    },
+    "Time_20step_20data": {
+        "time_5fsteps_5fper_5fsecond": "10",
+        "total_5ftime_5fsteps": "1"
+    }
+}

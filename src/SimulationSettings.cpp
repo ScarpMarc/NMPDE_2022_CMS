@@ -6,10 +6,10 @@ using namespace dealii;
 
 namespace ns_sim_settings
 {
-    SimulationSettings::SimulationSettings()
+    /*SimulationSettings::SimulationSettings()
         : SimulationSettings(
-              "cylinder3d.msh", // file_name("Ptero_full.msh"),
-              "Ptero_out", // file_name("Ptero_full.msh"),
+              "Ptero_full.msh", // file_name("Ptero_full.msh"),
+              "Ptero_out",      // file_name("Ptero_full.msh"),
               2,                //        degree_velocity(2),
               1,                //        degree_pressure(1),
               1.825e-5,         //        coeff_nu(1.825e-5),
@@ -17,7 +17,7 @@ namespace ns_sim_settings
               10,               //        coeff_nu_ramp_down_times(10),
               1.204,            //        coeff_rho(1.204),
               {10.0, 0.0, 0.0}, //        inlet_velocity_start({0.0, 10.0, 0.0}),
-              {10.0, 0.0, 0.0},   //        inlet_velocity_end({0.0, .1, 0.0}),
+              {10.0, 0.0, 0.0}, //        inlet_velocity_end({0.0, .1, 0.0}),
               10.0,             //        outlet_pressure(10.0),
               5000,             //        max_solver_iteration_amt(5000),
               1e-6,             //        desired_solver_precision(1e-6),
@@ -29,47 +29,52 @@ namespace ns_sim_settings
               10                //        time_steps_per_second(10)
           )
     {
-    }
+    }*/
 
-    SimulationSettings::SimulationSettings(const std::string file_name,
-    const std::string out_file_name,
-                       const unsigned int degree_velocity,
-                       const unsigned int degree_pressure,
-                       const double coeff_nu,
-                       const double coeff_nu_start,
-                       const unsigned int coeff_nu_ramp_down_times,
-                       const double coeff_rho,
-                       const std::array<double, 3> inlet_velocity_start,
-                       const std::array<double, 3> inlet_velocity_end,
-                       const double outlet_pressure,
-                       const unsigned int max_solver_iteration_amt,
-                       const double desired_solver_precision,
-                       const unsigned int max_newton_iteration_amt,
-                       const double desired_newton_precision,
-                       const double theta,
-                          const double coeff_relax_gamma,
-                       const unsigned long total_time_steps,
-                       const unsigned long time_steps_per_second) : file_name(file_name),
-                       out_file_name(out_file_name),
-                        degree_velocity(degree_velocity),
-degree_pressure(degree_pressure),
-coeff_nu(coeff_nu),
-coeff_nu_start(coeff_nu_start),
-coeff_nu_ramp_down_times(coeff_nu_ramp_down_times),
-coeff_rho(coeff_rho),
-inlet_velocity_start(inlet_velocity_start),
-inlet_velocity_end(inlet_velocity_end),
-outlet_pressure(outlet_pressure),
-max_solver_iteration_amt(max_solver_iteration_amt),
-desired_solver_precision(desired_solver_precision),
-max_newton_iteration_amt(max_newton_iteration_amt),
-desired_newton_precision(desired_newton_precision),
-theta(theta),
-coeff_relax_gamma(coeff_relax_gamma),
-total_time_steps(total_time_steps),
-time_steps_per_second(time_steps_per_second),
-ramp_down_step_size(0.0),
-advised_ramp_down_step_size(0.0)
+    /*SimulationSettings::SimulationSettings(const std::string file_name,
+                                           const std::string out_file_name,
+                                           const unsigned int degree_velocity,
+                                           const unsigned int degree_pressure,
+                                           const double coeff_nu,
+                                           const double coeff_nu_start,
+                                           const unsigned int coeff_nu_ramp_down_times,
+                                           const double coeff_rho,
+                                           const std::array<double, 3> inlet_velocity_start,
+                                           const std::array<double, 3> inlet_velocity_end,
+                                           const double outlet_pressure,
+                                           const unsigned int max_solver_iteration_amt,
+                                           const double desired_solver_precision,
+                                           const unsigned int max_newton_iteration_amt,
+                                           const double desired_newton_precision,
+                                           const double theta,
+                                           const double coeff_relax_gamma,
+                                           const unsigned long total_time_steps,
+                                           const unsigned long time_steps_per_second) : file_name(file_name),
+                                                                                        out_file_name(out_file_name),
+                                                                                        degree_velocity(degree_velocity),
+                                                                                        degree_pressure(degree_pressure),
+                                                                                        coeff_nu(coeff_nu),
+                                                                                        coeff_nu_start(coeff_nu_start),
+                                                                                        coeff_nu_ramp_down_times(coeff_nu_ramp_down_times),
+                                                                                        coeff_rho(coeff_rho),
+                                                                                        inlet_velocity_start(inlet_velocity_start),
+                                                                                        inlet_velocity_end(inlet_velocity_end),
+                                                                                        outlet_pressure(outlet_pressure),
+                                                                                        max_solver_iteration_amt(max_solver_iteration_amt),
+                                                                                        desired_solver_precision(desired_solver_precision),
+                                                                                        max_newton_iteration_amt(max_newton_iteration_amt),
+                                                                                        desired_newton_precision(desired_newton_precision),
+                                                                                        theta(theta),
+                                                                                        coeff_relax_gamma(coeff_relax_gamma),
+                                                                                        total_time_steps(total_time_steps),
+                                                                                        time_steps_per_second(time_steps_per_second),
+                                                                                        ramp_down_step_size(0.0),
+                                                                                        advised_ramp_down_step_size(0.0)
+    {
+        initialise_prm();
+    }*/
+
+    void SimulationSettings::initialise_prm()
     {
         prm.declare_entry("file_name",
                           "Ptero_full.msh",
@@ -165,6 +170,7 @@ advised_ramp_down_step_size(0.0)
                               Patterns::Double(0.0),
                               " Relaxation parameter for Netwon. ");
         }
+        prm.leave_subsection();
 
         prm.enter_subsection("Time step data");
         {
@@ -194,40 +200,12 @@ advised_ramp_down_step_size(0.0)
 
     void SimulationSettings::print() const
     {
-        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::JSON);
+        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::ShortJSON);
+        // prm.print_parameters("params.json");
     }
 
     void print_simulation_settings(const SimulationSettings &sim_settings)
     {
-        // Output settings
-        /*std::cout << "File name: " << sim_settings.file_name << std::endl; //"half_ptero_reducedx2.msh",//std::string file_name;
-        std::cout << std::endl;
-
-        std::cout << "nu coefficient: " << sim_settings.coeff_nu << std::endl;              // 1.0,//double coeff_nu;
-        std::cout << "Outlet pressure (Pa): " << sim_settings.outlet_pressure << std::endl; // 10.0,//double outlet_pressure;
-        std::cout << "Inlet velocity components (m/s): ";
-        for (unsigned int i = 0; i < 3; ++i)
-            std::cout << sim_settings.inlet_velocity[i] << " "; //{0.0, 10.0, 0.0},//std::array<double, 3> inlet_velocity;
-        std::cout << std::endl;
-
-        std::cout << std::endl;
-
-        std::cout << "Velocity degree: " << sim_settings.degree_velocity << std::endl; // 2,//unsigned int degree_velocity;
-        std::cout << "Pressure degree: " << sim_settings.degree_pressure << std::endl; // 1,//unsigned int degree_pressure;
-        std::cout << std::endl;
-
-        std::cout << "Max. solver iterations: " << sim_settings.max_solver_iteration_amt << std::endl;   // 5000,//unsigned int max_solver_iteration_amt;
-        std::cout << "Desired solver precision: " << sim_settings.desired_solver_precision << std::endl; // 1e-6,//double desired_solver_precision;
-
-        std::cout << "Max. Newton solver iterations: " << sim_settings.max_newton_iteration_amt << std::endl;   // 1000,//unsigned int max_solver_iteration_amt;
-        std::cout << "Desired Newton solver precision: " << sim_settings.desired_newton_precision << std::endl; // 1e-6,//double desired_solver_precision;
-
-        std::cout << "Theta for Theta Method: " << sim_settings.theta << std::endl; // 0.5//double theta;
-        std::cout << std::endl;
-        std::cout << "Total time steps: " << sim_settings.total_time_steps << std::endl;           // 100,// unsigned long total_time_steps;
-        std::cout << "Time steps per second: " << sim_settings.time_steps_per_second << std::endl; // 10// double seconds_per_time_steps;
-        std::cout << std::endl;*/
-
         sim_settings.print();
     }
 
@@ -236,9 +214,9 @@ advised_ramp_down_step_size(0.0)
         std::ifstream file(filename, std::ios::in);
         AssertThrow(file, ExcFileNotOpen(filename));
 
-        prm.parse_input(file);
+        prm.parse_input_from_json(file);
 
-        file_name = prm.get("file_name");
+        /*file_name = prm.get("file_name");
         out_file_name = prm.get("out_file_name");
 
         prm.enter_subsection("Finite-element settings");
@@ -305,7 +283,7 @@ advised_ramp_down_step_size(0.0)
             total_time_steps = prm.get_integer("total_time_steps");
             time_steps_per_second = prm.get_double("time_steps_per_second");
         }
-        prm.leave_subsection();
+        prm.leave_subsection();*/
 
         file.close();
     }

@@ -7,20 +7,38 @@ int main(int argc, char *argv[])
   Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv);
 
   ns_sim_settings::SimulationSettings sim_settings;
+  std::string settings_file_name;
+
+  settings_file_name = argv[1];
 
   int mpi_ID;
-
+  int mpi_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_ID);
+  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
   if (mpi_ID == 0)
   {
     if (argc > 1)
     {
       // Load from file in the future. For now throw an error
       // sym_settings = load_settings(argv[1]);
-      std::cout << "Error! File loading will be supported in the future" << std::endl;
-      return -1;
     }
+  }
 
+  if (mpi_ID == 0)
+  {
+    std::cout << "Loading settings from file: " << settings_file_name << std::endl;
+  }
+
+  if (argc > 1)
+  {
+    sim_settings.read_data(settings_file_name);
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (mpi_ID == 0)
+  {
     sim_settings.print();
   }
 
