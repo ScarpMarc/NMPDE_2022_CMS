@@ -1,11 +1,15 @@
 #!/bin/bash
 #PBS -S /bin/bash
 
-#PBS -l nodes=1:ppn=20,walltime=0:30:00 -q gigat
-#PBS -N stokes_ptero_build_cms
+#PBS -l nodes=1:ppn=20,walltime=4:00:00 -q gigat
+#PBS -N stokes_ptero_build_cuda_cms
 
 source /u/par3/hpc.bashrc
 
-cd /u/par3/repos/NMPDE_2022_CMS/build
-#sort ${PBS_NODEFILE} | uniq -c | awk '{ printf("%s\n", $2); }' > mpd.nodes
-time mpiexec -machinefile mpd.nodes -n 20 ./lab-09 > /scratch/hpc/par3/out.txt 2>&1
+cp -R /u/par3/repos/NMPDE_2022_CMS/build /scratch/hpc/par3/build
+
+#cp -R /u/par3/repos/NMPDE_2022_CMS/mesh /scratch/hpc/par3/mesh
+
+cd /scratch/hpc/par3/build
+sort ${PBS_NODEFILE} | uniq -c | awk '{ printf("%s\n", $2); }' > mpd.nodes
+time mpiexec -machinefile mpd.nodes -n 20 ./Ptero input.json > /scratch/hpc/par3/out_ptero.txt 2>&1

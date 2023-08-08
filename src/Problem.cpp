@@ -344,7 +344,7 @@ void NavierStokes::assemble_system(const bool initial_step)
       for (unsigned int f = 0; f < cell->n_faces(); ++f)
       {
         if (cell->face(f)->at_boundary() &&
-            cell->face(f)->boundary_id() == 1)
+            cell->face(f)->boundary_id() == 2) // 1 inlet for test mesh, 2 for ptero
         {
           fe_face_values.reinit(cell, f);
 
@@ -388,9 +388,9 @@ void NavierStokes::assemble_system(const bool initial_step)
     // That is, only if the iteration of the Newton method is the first one.
     // Otherwise the Dirichet BCs for the inlet surface in the other steps are all
     // zero (no increase in the inlet velocity).
-    boundary_functions[0] = &zero_function;
+    boundary_functions[1] = &zero_function; // 0 for test mesh
     if (initial_step)
-      boundary_functions[0] = &inlet_velocity;
+      boundary_functions[1] = &inlet_velocity;
     VectorTools::interpolate_boundary_values(dof_handler,
                                              boundary_functions,
                                              boundary_values,
@@ -399,8 +399,9 @@ void NavierStokes::assemble_system(const bool initial_step)
 
     boundary_functions.clear();
     // std::vector<double> values = {0.0, 1.0, 0.0, 0.0};
-    boundary_functions[2] = &zero_function;
-    boundary_functions[3] = &zero_function;
+    boundary_functions[0] = &zero_function; // 2 for test mesh
+    boundary_functions[3] = &zero_function; // 3 for test mesh
+    boundary_functions[4] = &zero_function; // none for test mesh
     VectorTools::interpolate_boundary_values(dof_handler,
                                              boundary_functions,
                                              boundary_values,
