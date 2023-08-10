@@ -182,11 +182,11 @@ void NavierStokes::assemble_system(const bool initial_step)
   pcout << "===============================================" << std::endl;
   pcout << "Assembling the system" << std::endl;
 
-  //pcout << "nu = " << get_current_coeff_nu() << std::endl
-  //        << "gamma = " << settings.get_coeff_relax_gamma() << std::endl
-  //        << "inlet velocity = " << get_current_inlet_velocity(0) << ", "
-  //        << get_current_inlet_velocity(1) << ", " << get_current_inlet_velocity(2) << std::endl
-  //        << "outlet pressure = " << settings.get_outlet_pressure() << std::endl;
+  // pcout << "nu = " << get_current_coeff_nu() << std::endl
+  //         << "gamma = " << settings.get_coeff_relax_gamma() << std::endl
+  //         << "inlet velocity = " << get_current_inlet_velocity(0) << ", "
+  //         << get_current_inlet_velocity(1) << ", " << get_current_inlet_velocity(2) << std::endl
+  //         << "outlet pressure = " << settings.get_outlet_pressure() << std::endl;
 
   const unsigned int dofs_per_cell = fe->dofs_per_cell;
   const unsigned int n_q = quadrature->size();
@@ -262,18 +262,16 @@ void NavierStokes::assemble_system(const bool initial_step)
 
           // First Non-liner term contribution in the momentum equation.
           cell_matrix(i, j) +=
-              scalar_product(
-                  fe_values[velocity].value(i, q),
-                  velocity_gradient_loc[q] *
-                      fe_values[velocity].value(j, q)) *
+              fe_values[velocity].value(i, q) *
+              (velocity_gradient_loc[q] *
+               fe_values[velocity].value(j, q)) *
               fe_values.JxW(q);
 
           // Second Non-liner term contribution in the momentum equation.
           cell_matrix(i, j) +=
-              scalar_product(
-                  fe_values[velocity].value(j, q),
-                  fe_values[velocity].gradient(i, q) *
-                      velocity_values_loc[q]) *
+              fe_values[velocity].value(i, q) *
+              (fe_values[velocity].gradient(j, q) *
+               velocity_values_loc[q]) *
               fe_values.JxW(q);
 
           // Pressure term in the momentum equation.
@@ -285,11 +283,12 @@ void NavierStokes::assemble_system(const bool initial_step)
           cell_matrix(i, j) -= fe_values[velocity].divergence(j, q) *
                                fe_values[pressure].value(i, q) *
                                fe_values.JxW(q);
+
           // Grad-div stabilization term.
           cell_matrix(i, j) +=
               settings.get_coeff_relax_gamma() *
-              scalar_product(fe_values[velocity].gradient(i, q),
-                             fe_values[velocity].gradient(j, q)) *
+              fe_values[velocity].divergence(i, q) *
+              fe_values[velocity].divergence(j, q) *
               fe_values.JxW(q);
 
           // Pressure mass matrix.
@@ -306,10 +305,9 @@ void NavierStokes::assemble_system(const bool initial_step)
                                       velocity_gradient_loc[q]) *
                        fe_values.JxW(q);
         // Non-linear term contribution.
-        cell_rhs(i) -= scalar_product(
-                           fe_values[velocity].value(i, q),
-                           velocity_gradient_loc[q] *
-                               velocity_values_loc[q]) *
+        cell_rhs(i) -= fe_values[velocity].value(i, q) *
+                       (velocity_gradient_loc[q] *
+                        velocity_values_loc[q]) *
                        fe_values.JxW(q);
 
         // Pressure term contribution in momentum equation.
@@ -352,7 +350,7 @@ void NavierStokes::assemble_system(const bool initial_step)
           {
             for (unsigned int i = 0; i < dofs_per_cell; ++i)
             {
-              cell_rhs(i) +=
+              cell_rhs(i) -=
                   settings.get_outlet_pressure() *
                   scalar_product(fe_face_values.normal_vector(q),
                                  fe_face_values[velocity].value(i,
@@ -419,8 +417,8 @@ void NavierStokes::solve_newton_step()
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
-  //double _gamma = settings.get_coeff_relax_gamma();
-  //double _nu = get_current_coeff_nu();
+  // double _gamma = settings.get_coeff_relax_gamma();
+  // double _nu = get_current_coeff_nu();
 
   PreconditionBlockTriangular preconditioner;
   preconditioner.initialize(settings.get_coeff_relax_gamma(),
