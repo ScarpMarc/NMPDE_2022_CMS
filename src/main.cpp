@@ -13,6 +13,10 @@ int main(int argc, char *argv[])
   int mpi_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_ID);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+  if (mpi_ID == 0)
+  {
+    std::cout << "Running on " << mpi_size << " processes." << std::endl;
+  }
 
   if (argc > 1)
   {
