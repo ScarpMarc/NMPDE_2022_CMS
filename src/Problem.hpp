@@ -85,12 +85,10 @@ public:
         InletVelocity(NavierStokes &parent)
             : Function<dim>(dim + 1), parent(parent)
         {
-            parent.pcout << "InletVelocity constructor" << std::endl;
-            std::cout << "InletVelocity constructor" << std::endl;
         }
 
         virtual void
-        vector_value(const Point<dim> &/*p*/, Vector<double> &values) const override
+        vector_value(const Point<dim> & /*p*/, Vector<double> &values) const override
         {
             // values[0] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
             values[3] = 0.0; // Unused component
@@ -101,7 +99,7 @@ public:
         }
 
         virtual double
-        value(const Point<dim> &/*p*/, const unsigned int component = 0) const override
+        value(const Point<dim> & /*p*/, const unsigned int component = 0) const override
         {
             if (component == 3) // Unused component
                 // return -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
@@ -174,7 +172,7 @@ protected:
 
     unsigned long current_time_step = 0;
 
-    ns_sim_settings::SimulationSettings& settings;
+    ns_sim_settings::SimulationSettings &settings;
 
     // Number of MPI processes.
     const unsigned int mpi_size;
