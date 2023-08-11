@@ -43,6 +43,17 @@ void NavierStokes::setup()
 
     pcout << "  Number of elements = " << mesh.n_global_active_cells()
           << std::endl;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    for (unsigned int i = 0; i < mpi_size; ++i)
+    {
+      if (i == mpi_rank)
+      {
+        cout << "    Number of elements for processor " << i << " = " << mesh.n_active_cells()
+             << std::endl;
+      }
+    }
   }
 
   pcout << "-----------------------------------------------" << std::endl;
@@ -180,13 +191,16 @@ void NavierStokes::setup()
 void NavierStokes::assemble_system(const bool initial_step)
 {
   pcout << "===============================================" << std::endl;
-  pcout << "Assembling the system" << std::endl;
+  pcout << "Assembling the system";
+  if (initial_step)
+    pcout << " (initial step)";
+  pcout << std::endl;
 
   // pcout << "nu = " << get_current_coeff_nu() << std::endl
-  //         << "gamma = " << settings.get_coeff_relax_gamma() << std::endl
-  //         << "inlet velocity = " << get_current_inlet_velocity(0) << ", "
-  //         << get_current_inlet_velocity(1) << ", " << get_current_inlet_velocity(2) << std::endl
-  //         << "outlet pressure = " << settings.get_outlet_pressure() << std::endl;
+  //<< "gamma = " << settings.get_coeff_relax_gamma() << std::endl
+  //<< "inlet velocity = " << get_current_inlet_velocity(0) << ", "
+  //<< get_current_inlet_velocity(1) << ", " << get_current_inlet_velocity(2) << std::endl
+  //<< "outlet pressure = " << settings.get_outlet_pressure() << std::endl;
 
   const unsigned int dofs_per_cell = fe->dofs_per_cell;
   const unsigned int n_q = quadrature->size();
@@ -336,13 +350,13 @@ void NavierStokes::assemble_system(const bool initial_step)
       }
     }
 
-    // Boundary integral for Neumann BCs.
+    // Boundary integral for Neumann BCs (outlet)
     if (cell->at_boundary())
     {
       for (unsigned int f = 0; f < cell->n_faces(); ++f)
       {
         if (cell->face(f)->at_boundary() &&
-            cell->face(f)->boundary_id() == 2) // 1 inlet for test mesh, 2 for ptero
+            cell->face(f)->boundary_id() == 2) // 1 for test mesh, 2 for ptero
         {
           fe_face_values.reinit(cell, f);
 
@@ -449,6 +463,9 @@ void NavierStokes::solve_newton()
     initial_step = false;
     residual_norm = residual_vector.l2_norm();
 
+    // pcout << "Current velocity: " << //get_current_inlet_velocity(0) << ", "
+    //       << get_current_inlet_velocity(1) << ", " << get_current_inlet_velocity(2) << std::endl;
+
     pcout << "Newton iteration " << n_iter << "/" << n_max_iters
           << " - ||r|| = " << std::scientific << std::setprecision(6)
           << residual_norm << std::flush;
@@ -478,6 +495,8 @@ void NavierStokes::output() const
   pcout << "===============================================" << std::endl;
 
   DataOut<dim> data_out;
+
+  // data_out.attach_dof_handler(dof_handler);
 
   std::vector<DataComponentInterpretation::DataComponentInterpretation>
       data_component_interpretation(
