@@ -85,6 +85,8 @@ public:
         InletVelocity(NavierStokes &parent)
             : Function<dim>(dim + 1), parent(parent)
         {
+            parent.pcout << "InletVelocity constructor" << std::endl;
+            std::cout << "InletVelocity constructor" << std::endl;
         }
 
         virtual void
