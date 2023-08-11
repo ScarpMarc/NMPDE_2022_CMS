@@ -85,19 +85,23 @@ public:
         InletVelocity(NavierStokes &parent)
             : Function<dim>(dim + 1), parent(parent)
         {
+            parent.pcout << "InletVelocity constructor" << std::endl;
+            std::cout << "InletVelocity constructor" << std::endl;
         }
 
         virtual void
-        vector_value(const Point<dim> /*&p*/, Vector<double> &values) const
+        vector_value(const Point<dim> &/*p*/, Vector<double> &values) const override
         {
             // values[0] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
             values[3] = 0.0; // Unused component
             for (unsigned int i = 0; i < dim; ++i)
+            {
                 values[i] = parent.get_current_inlet_velocity(i);
+            }
         }
 
         virtual double
-        value(const Point<dim> /*&p*/, const unsigned int component = 0) const
+        value(const Point<dim> &/*p*/, const unsigned int component = 0) const override
         {
             if (component == 3) // Unused component
                 // return -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
@@ -109,7 +113,7 @@ public:
         }
 
     protected:
-        NavierStokes &parent;
+        const NavierStokes &parent;
     };
 
     // Since we're working with block matrices, we need to make our own
