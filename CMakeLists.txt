@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.12.0)
-project(PteroWindChamber LANGUAGES CXX C)
 
-#execute_process (
-#    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/Modules/load_modules.sh
-#    COMMAND_ECHO STDOUT
-#)
+# Locate deal.II and initialize its variables.
+find_package(deal.II 9.3.1 REQUIRED
+  HINTS ${DEAL_II_DIR} $ENV{DEAL_II_DIR} $ENV{mkDealiiPrefix})
+deal_ii_initialize_cached_variables()
+
+project(PteroWindChamber LANGUAGES CXX C)
 
 include(common/cmake-common.cmake)
 

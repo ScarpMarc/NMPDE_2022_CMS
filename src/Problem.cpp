@@ -1,4 +1,5 @@
 #include "Problem.hpp"
+#include <deal.II/base/timer.h>
 
 double NavierStokes::get_current_coeff_nu() const
 {
@@ -494,6 +495,8 @@ void NavierStokes::output() const
 {
   pcout << "===============================================" << std::endl;
 
+  dealii::Timer output_timer(MPI_COMM_WORLD, true);
+
   DataOut<dim> data_out;
 
   // data_out.attach_dof_handler(dof_handler);
@@ -536,6 +539,15 @@ void NavierStokes::output() const
                            output_file_name + ".xdmf",
                            MPI_COMM_WORLD);
 
+  output_timer.stop();
+
   pcout << "Output written to " << output_file_name << std::endl;
   pcout << "===============================================" << std::endl;
+  if (mpi_rank == 0)
+  {
+    std::cout.precision(5);
+    std::cout.setf(std::ios::fixed, std::ios::floatfield);
+    pcout << "Output time: " << output_timer.wall_time() << "s" << std::endl;
+    pcout << "===============================================" << std::endl;
+  }
 }

@@ -1,6 +1,8 @@
 #include "Problem.hpp"
 #include "SimulationSettings.hpp"
 
+#include <deal.II/base/timer.h>
+
 // Main function.
 int main(int argc, char *argv[])
 {
@@ -35,11 +37,21 @@ int main(int argc, char *argv[])
     sim_settings.print();
   }
 
+  dealii::Timer timer(MPI_COMM_WORLD, true);
+
   NavierStokes problem(sim_settings);
 
   problem.setup();
   problem.solve_newton();
   problem.output();
+
+  timer.stop();
+  if (mpi_ID == 0)
+  {
+    std::cout.precision(5);
+    std::cout.setf(std::ios::fixed, std::ios::floatfield);
+    std::cout << "Total runtime: " << timer.wall_time() << "s" << std::endl;
+  }
 
   return 0;
 }

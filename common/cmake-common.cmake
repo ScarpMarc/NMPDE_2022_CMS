@@ -25,11 +25,6 @@ message(STATUS "Using the Boost-${Boost_VERSION} configuration found at ${Boost_
 message(STATUS)
 include_directories(${Boost_INCLUDE_DIRS})
 
-# Locate deal.II and initialize its variables.
-find_package(deal.II 9.3.1 REQUIRED
-  HINTS ${DEAL_II_DIR} $ENV{DEAL_II_DIR} $ENV{mkDealiiPrefix})
-deal_ii_initialize_cached_variables()
-
 # Add useful compiler flags.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfloat-conversion -Wmissing-braces -Wnon-virtual-dtor")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
