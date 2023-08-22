@@ -63,7 +63,7 @@ public:
     // Effect lower part of the preconditioner (Shur complement)
     // Computing dst_1 = -(gamma + viscosity)*Mp^-1 * src_1
     {
-      SolverControl solver_control_pressure(1000,
+      SolverControl solver_control_pressure(15000,
                                             1e-2 * src.block(1).l2_norm());
       SolverCG<TrilinosWrappers::MPI::Vector> solver_cg_pressure(
           solver_control_pressure);
@@ -83,7 +83,7 @@ public:
       tmp.sadd(-1.0, src.block(0));
 
       // Change the iterative solver for the velocity sub-block (A is not simmetric anymore)
-      SolverControl solver_control_velocity(1000,
+      SolverControl solver_control_velocity(15000,
                                             1e-2 * src.block(0).l2_norm());
       SolverGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_velocity(
           solver_control_velocity);

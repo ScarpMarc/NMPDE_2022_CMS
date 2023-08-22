@@ -41,9 +41,19 @@ int main(int argc, char *argv[])
 
   NavierStokes problem(sim_settings);
 
-  problem.setup();
-  problem.solve_newton();
-  problem.output();
+  try
+  {
+    problem.setup();
+    problem.solve_newton();
+    problem.output();
+  }
+  catch (const std::exception &e)
+  {
+    if (mpi_ID == 0)
+    {
+      std::cerr << e.what() << '\n';
+    }
+  }
 
   timer.stop();
   if (mpi_ID == 0)
