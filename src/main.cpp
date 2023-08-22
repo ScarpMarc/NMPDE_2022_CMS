@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
   try
   {
     problem.setup();
-    problem.solve_newton();
-    problem.output();
+    problem.solve();
+    // Output is handled at the end of each time step.
   }
   catch (const std::exception &e)
   {

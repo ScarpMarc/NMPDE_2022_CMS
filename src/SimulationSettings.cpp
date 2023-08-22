@@ -129,11 +129,11 @@ namespace ns_sim_settings
         prm.enter_subsection("Inlet velocity");
         {
             prm.declare_entry("inlet_velocity_start",
-                              "10.0, 0.0, 0.0",
+                              "0.0, 0.0, 0.0",
                               Patterns::List(Patterns::Double(Patterns::Double::min_double_value), 3, 3),
                               " Inlet velocity components at time 0 [m/s]. ");
             prm.declare_entry("inlet_velocity_end",
-                              "10.0, 0.0, 0.0",
+                              "0.0, 1.0, 0.0",
                               Patterns::List(Patterns::Double(Patterns::Double::min_double_value), 3, 3),
                               " Inlet velocity components at end time [m/s]. ");
         }
@@ -162,23 +162,35 @@ namespace ns_sim_settings
                               "1e-6",
                               Patterns::Double(0.0),
                               " Desired precision for the Newton solver. ");
-            prm.declare_entry("theta",
+            /*prm.declare_entry("theta",
                               "0.5",
                               Patterns::Double(0.0, 1.0),
-                              " Theta parameter for the time discretization. ");
-            prm.declare_entry("coeff_relax_gamma",
+                              " Theta parameter for the time discretization. ");*/
+            /*prm.declare_entry("coeff_relax_gamma",
                               "1.0",
                               Patterns::Double(0.0),
-                              " Relaxation parameter for Netwon. ");
+                              " Relaxation parameter for Netwon. ");*/
+            prm.declare_entry("preconditioner_coeff_alpha",
+                              "0.1",
+                              Patterns::Double(0.0),
+                              " Used for the preconditioner. ");
         }
         prm.leave_subsection();
 
         prm.enter_subsection("Time step data");
         {
-            prm.declare_entry("total_time_steps",
-                              "100",
+            prm.declare_entry("time_steps_pre_ramp",
+                              "0",
+                              Patterns::Integer(0),
+                              " Amount of time steps in which the velocity is stationary, before the ramp starts. ");
+            prm.declare_entry("time_steps_ramp",
+                              "20",
                               Patterns::Integer(1),
-                              " Total amount of time steps. ");
+                              " Amount of time steps needed to go from the starting velocity to the ending velocity. ");
+            prm.declare_entry("time_steps_post_ramp",
+                              "10",
+                              Patterns::Integer(0),
+                              " Amount of time steps in which the velocity is stationary, after the ramp has ended. ");
             prm.declare_entry("time_steps_per_second",
                               "10",
                               Patterns::Integer(1),
@@ -186,17 +198,31 @@ namespace ns_sim_settings
         }
         prm.leave_subsection();
 
-        prm.declare_entry("verbose",
-                          "true",
-                          Patterns::Bool(),
-                          " This indicates whether the output of the solution "
-                          "process should be verbose. ");
+        prm.enter_subsection("Boundary conditions");
+        {
+            prm.declare_entry("surfaces_walls",
+                              "1, 5",
+                              Patterns::List(Patterns::Integer(0)),
+                              " Wall surfaces indices ");
+            prm.declare_entry("surfaces_inlets",
+                              "2",
+                              Patterns::List(Patterns::Integer(0)),
+                              " Inlet surfaces indices. ");
+            prm.declare_entry("surfaces_outlets",
+                              "3",
+                              Patterns::List(Patterns::Integer(0)),
+                              " Inlet surfaces indices. ");
+            prm.declare_entry("surfaces_free_slip",
+                              "4",
+                              Patterns::List(Patterns::Integer(0)),
+                              " Free-slip surfaces indices. ");
+        }
+        prm.leave_subsection();
 
-        prm.declare_entry("output_interval",
-                          "1",
-                          Patterns::Integer(1),
-                          " This indicates between how many time steps we print "
-                          "the solution. ");
+        prm.declare_entry("characteristic_length",
+                          "0.3",
+                          Patterns::Double(0.0),
+                          " Characteristic length used to estimate Reynold's number. ");
 
         update_variables();
     }
@@ -248,7 +274,7 @@ namespace ns_sim_settings
                 temp >> inlet_velocity_start[i];
 
             temp.clear();
-            
+
             temp.str(prm.get("inlet_velocity_end"));
 
             for (unsigned int i = 0; i < 3; ++i)
@@ -268,17 +294,103 @@ namespace ns_sim_settings
             max_newton_iteration_amt = prm.get_integer("max_newton_iteration_amt");
             desired_newton_precision = prm.get_double("desired_newton_precision");
 
-            theta = prm.get_double("theta");
-            coeff_relax_gamma = prm.get_double("coeff_relax_gamma");
+            // theta = prm.get_double("theta");
+            preconditioner_coeff_alpha = prm.get_double("preconditioner_coeff_alpha");
+            // coeff_relax_gamma = prm.get_double("coeff_relax_gamma");
         }
         prm.leave_subsection();
 
         prm.enter_subsection("Time step data");
         {
-            total_time_steps = prm.get_integer("total_time_steps");
+            time_steps_pre_ramp = prm.get_integer("time_steps_pre_ramp");
+            time_steps_ramp = prm.get_integer("time_steps_ramp");
+            time_steps_post_ramp = prm.get_integer("time_steps_post_ramp");
             time_steps_per_second = prm.get_double("time_steps_per_second");
         }
         prm.leave_subsection();
+
+        prm.enter_subsection("Boundary conditions");
+        {
+            std::istringstream temp;
+            unsigned int temp_uint;
+
+            temp.str(prm.get("surfaces_walls"));
+
+            surfaces_walls.clear();
+
+            while (temp >> temp_uint)
+            {
+                surfaces_walls.push_back(temp_uint);
+            }
+            temp.clear();
+
+            temp.str(prm.get("surfaces_inlets"));
+
+            surfaces_inlets.clear();
+            while (temp >> temp_uint)
+            {
+                surfaces_inlets.push_back(temp_uint);
+            }
+
+            temp.clear();
+
+            temp.str(prm.get("surfaces_outlets"));
+
+            surfaces_outlets.clear();
+            while (temp >> temp_uint)
+            {
+                surfaces_outlets.push_back(temp_uint);
+            }
+
+            temp.clear();
+
+            temp.str(prm.get("surfaces_free_slip"));
+
+            surfaces_free_slip.clear();
+            while (temp >> temp_uint)
+            {
+                surfaces_free_slip.push_back(temp_uint);
+            }
+
+            temp.clear();
+        }
+        prm.leave_subsection();
+
+        characteristic_length = prm.get_double("characteristic_length");
+
+        int mpi_ID;
+        int mpi_size;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_ID);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+        bool warning_issued = false;
+        if (mpi_ID == 0)
+        {
+            if (surfaces_inlets.size() == 0)
+            {
+                std::cout << "Warning: no inlet surfaces specified." << std::endl;
+                warning_issued = true;
+            }
+            if (surfaces_outlets.size() == 0)
+            {
+                std::cout << "Warning: no outlet surfaces specified." << std::endl;
+                warning_issued = true;
+            }
+            if (surfaces_free_slip.size() == 0)
+            {
+                std::cout << "Warning: no free-slip surfaces specified." << std::endl;
+                warning_issued = true;
+            }
+            if (surfaces_walls.size() == 0)
+            {
+                std::cout << "Warning: no wall surfaces specified." << std::endl;
+                warning_issued = true;
+            }
+
+            if(warning_issued)
+            {
+                std::cout << "Please check whether the input syntax is correct." << std::endl;
+            }
+        }
     }
 
     void SimulationSettings::read_data(const std::string &filename)

@@ -29,8 +29,9 @@
 #include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/vector_tools.h>
 
-#include "PreconditionBlockTriangular.hpp"
+// #include "PreconditionBlockTriangular.hpp"
 #include "SimulationSettings.hpp"
+#include "PreconditionSIMPLE.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -47,7 +48,6 @@ public:
     // Function for the forcing term.
     class ForcingTerm : public Function<dim>
     {
-        // get_time, set_time, advance_time
     public:
         virtual void
         vector_value(const Point<dim> & /*p*/,
@@ -71,6 +71,29 @@ public:
 
     protected:
         const double g = 0.0;
+    };
+
+    // The initial solution to set up the system.
+    class InitialSolution : public Function<dim>
+    {
+    public:
+        InitialSolution()
+            : Function<dim>(dim + 1)
+        {
+        }
+
+        virtual void
+        vector_value(const Point<dim> & /*p*/, Vector<double> &values) const override
+        {
+            for (unsigned int i = 0; i < dim + 1; ++i)
+                values[i] = 0.0;
+        }
+
+        virtual double
+        value(const Point<dim> & /*p*/, const unsigned int /*component*/ = 0) const override
+        {
+            return 0.0;
+        }
     };
 
     // Function for inlet velocity. This actually returns an object with four
@@ -134,9 +157,22 @@ public:
     protected:
     };
 
+    /*
+    const std::vector<unsigned int> surfaces_walls;
+
+    const std::vector<unsigned int> surfaces_inlets;
+
+    const std::vector<unsigned int> surfaces_outlets;
+
+    const std::vector<unsigned int> rn surfaces_free_slip;
+
+    */
+
     // Constructor.
     NavierStokes(ns_sim_settings::SimulationSettings &settings)
-        : settings(settings), mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0), inlet_velocity(*this), mesh(MPI_COMM_WORLD)
+        : settings(settings), mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0),
+          surfaces_walls(settings.get_surfaces_walls()), surfaces_inlets(settings.get_surfaces_inlets()), surfaces_outlets(settings.get_surfaces_outlets()), surfaces_free_slip(settings.get_surfaces_free_slip()),
+          inlet_velocity(*this), mesh(MPI_COMM_WORLD)
     {
     }
 
@@ -144,20 +180,52 @@ public:
     void
     setup();
 
-    // Assemble system for each iteration of the Newton method. We also assemble the pressure mass matrix (needed for the
-    // preconditioner).
+    /**
+     * @brief Assemble the system matrix and right-hand side.
+     */
     void
-    assemble_system(const bool initial_step);
+        assemble_system(/*const AssemblyType &type*/);
 
     // Solve Newton step.
-    void
-    solve_newton_step();
+    // void
+    // solve_newton_step();
 
     // Solve Newton method.
-    void
-    solve_newton();
+    // void
+    // solve_newton();
+
+    /**
+     * @brief The entry point of the solving process.
+     * @details Evaluates Reynold's number and decides whether to employ the continuation method at the start or not. Then, it calls the solve_time_step() function for each time step, and increments the time step counter after each iteration.
+     */
+    void solve();
+
+    /**
+     * @brief Solves the system for the current time step.
+     * @details This function also exports the solution to a file. Note that this function does not increment the time step counter, nor does it perform any checks on Reynold's number.
+     */
+    void solve_time_step();
+
+    /**
+     * @brief Computes the initial guess by using the continuation method.
+     * @details The function will iterate through the values of the kinematic viscosity and solve the system for each value. The solution of the previous iteration will be used as the initial guess for the next iteration. Then, the solution of the last iteration will be used as the initial guess for the actual simulation.
+     * @param nu_start Starting value of the kinematic viscosity.
+     * @param nu_end Ending value of the kinematic viscosity.
+     * @param num_steps Number of steps to take between the starting and ending values.
+     */
+    void compute_initial_guess(const double &nu_start, const double &nu_end, const unsigned int &num_steps);
+
+    /**
+     * @brief Estimate Reynold's number.
+     * @return double The estimated Reynold's number.
+     */
+    double estimate_reynolds_number() const;
 
     // Output results.
+    /**
+     * @brief Outputs the solution to a file, at the current time step.
+     * @details Called at the end of each time step.
+     */
     void
     output() const;
 
@@ -165,14 +233,21 @@ public:
 
     double get_current_coeff_nu() const;
 
-    double get_current_inlet_velocity(const unsigned int component = 0) const;
+    double get_current_inlet_velocity(const unsigned int& component = 0) const;
+    void get_current_inlet_velocity(Vector<double> &output) const;
+
+    // enum AssemblyType
+    //{
+    //     STOKES_ONLY,
+    //     NAVIER_STOKES
+    // };
 
 protected:
     // MPI parallel. /////////////////////////////////////////////////////////////
 
-    unsigned long current_time_step = 0;
-
     ns_sim_settings::SimulationSettings &settings;
+
+    unsigned long current_time_step = 0;
 
     // Number of MPI processes.
     const unsigned int mpi_size;
@@ -185,6 +260,14 @@ protected:
 
     // Problem definition. ///////////////////////////////////////////////////////
 
+    const std::vector<unsigned int> surfaces_walls;
+
+    const std::vector<unsigned int> surfaces_inlets;
+
+    const std::vector<unsigned int> surfaces_outlets;
+
+    const std::vector<unsigned int> surfaces_free_slip;
+
     // Kinematic viscosity [m2/s].
     // const double nu = 1;
 
@@ -194,11 +277,15 @@ protected:
     // Outlet pressure [Pa].
     // const double p_out = 10;
 
+    const double max_reynolds_number_before_continuation = 500;
+
     // Forcing term.
     ForcingTerm forcing_term;
 
     // Inlet velocity.
     InletVelocity inlet_velocity;
+
+    InitialSolution initial_solution;
 
     // Discretization. ///////////////////////////////////////////////////////////
 
@@ -243,19 +330,25 @@ protected:
 
     // Pressure mass matrix, needed for preconditioning. We use a block matrix for
     // convenience, but in practice we only look at the pressure-pressure block.
-    TrilinosWrappers::BlockSparseMatrix pressure_mass;
+    // TrilinosWrappers::BlockSparseMatrix pressure_mass;
+
+    // Diagonal Inverse of F matrix, needed for preconditioning. We use a blockvector for convenience.
+    TrilinosWrappers::MPI::BlockVector D_inv;
 
     // Right-hand side vector in the linear system.
     TrilinosWrappers::MPI::BlockVector residual_vector;
 
-    // Solutin increment (without ghost elements).
-    TrilinosWrappers::MPI::BlockVector delta_owned;
+    // Solution increment (without ghost elements).
+    // TrilinosWrappers::MPI::BlockVector delta_owned;
 
     // System solution (without ghost elements).
     TrilinosWrappers::MPI::BlockVector solution_owned;
 
     // System solution (including ghost elements).
     TrilinosWrappers::MPI::BlockVector solution;
+
+    // System solution at previous time step.
+    TrilinosWrappers::MPI::BlockVector solution_old;
 };
 
 #endif

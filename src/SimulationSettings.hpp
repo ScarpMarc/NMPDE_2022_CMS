@@ -71,39 +71,55 @@ namespace ns_sim_settings
 
         std::string get_out_file_name() const { return out_file_name; }
 
-        unsigned int get_degree_velocity() const { return degree_velocity; }
+        constexpr unsigned int get_degree_velocity() const { return degree_velocity; }
 
-        unsigned int get_degree_pressure() const { return degree_pressure; }
+        constexpr unsigned int get_degree_pressure() const { return degree_pressure; }
 
-        double get_coeff_nu() const { return coeff_nu; }
+        constexpr double get_coeff_nu() const { return coeff_nu; }
 
-        double get_coeff_nu_start() const { return coeff_nu_start; }
+        constexpr double get_coeff_nu_start() const { return coeff_nu_start; }
 
-        unsigned int get_coeff_nu_ramp_down_times() const { return coeff_nu_ramp_down_times; }
+        constexpr unsigned int get_coeff_nu_ramp_down_times() const { return coeff_nu_ramp_down_times; }
 
-        double get_coeff_rho() const { return coeff_rho; }
+        constexpr double get_coeff_rho() const { return coeff_rho; }
 
-        std::array<double, 3> get_inlet_velocity_start() const { return inlet_velocity_start; }
+        constexpr std::array<double, 3> get_inlet_velocity_start() const { return inlet_velocity_start; }
 
-        std::array<double, 3> get_inlet_velocity_end() const { return inlet_velocity_end; }
+        constexpr std::array<double, 3> get_inlet_velocity_end() const { return inlet_velocity_end; }
 
-        double get_outlet_pressure() const { return outlet_pressure; }
+        constexpr double get_outlet_pressure() const { return outlet_pressure; }
 
-        unsigned int get_max_solver_iteration_amt() const { return max_solver_iteration_amt; }
+        constexpr unsigned int get_max_solver_iteration_amt() const { return max_solver_iteration_amt; }
 
-        double get_desired_solver_precision() const { return desired_solver_precision; }
+        constexpr double get_desired_solver_precision() const { return desired_solver_precision; }
 
-        unsigned int get_max_newton_iteration_amt() const { return max_newton_iteration_amt; }
+        constexpr unsigned int get_max_newton_iteration_amt() const { return max_newton_iteration_amt; }
 
-        double get_desired_newton_precision() const { return desired_newton_precision; }
+        constexpr double get_desired_newton_precision() const { return desired_newton_precision; }
 
-        double get_theta() const { return theta; }
+        //constexpr double get_theta() const { return theta; }
 
-        double get_coeff_relax_gamma() const { return coeff_relax_gamma; }
+        constexpr double get_preconditioner_coeff_alpha() const { return preconditioner_coeff_alpha; }
 
-        unsigned long get_total_time_steps() const { return total_time_steps; }
+        //constexpr double get_coeff_relax_gamma() const { return coeff_relax_gamma; }
+
+        constexpr unsigned long get_time_steps_pre_ramp() const { return time_steps_pre_ramp; }
+
+        constexpr unsigned long get_time_steps_ramp() const { return time_steps_ramp; }
+
+        constexpr unsigned long get_time_steps_post_ramp() const { return time_steps_post_ramp; }
 
         constexpr unsigned long get_time_steps_per_second() const { return time_steps_per_second; }
+
+        std::vector<unsigned int> get_surfaces_walls() const { return surfaces_walls; }
+
+        std::vector<unsigned int> get_surfaces_inlets() const { return surfaces_inlets; }
+
+        std::vector<unsigned int> get_surfaces_outlets() const { return surfaces_outlets; }
+
+        std::vector<unsigned int> get_surfaces_free_slip() const { return surfaces_free_slip; }
+
+        double get_characteristic_length() const { return characteristic_length; }
 
     protected:
         // These two are determined automatically and/or serve just as info for the user.
@@ -130,10 +146,18 @@ namespace ns_sim_settings
         double desired_solver_precision;
         unsigned int max_newton_iteration_amt;
         double desired_newton_precision;
-        double theta;
-        double coeff_relax_gamma;
-        unsigned long total_time_steps;
+        //double theta;
+        double preconditioner_coeff_alpha;
+        //double coeff_relax_gamma;
+        unsigned long time_steps_pre_ramp;
+        unsigned long time_steps_ramp;
+        unsigned long time_steps_post_ramp;
         unsigned long time_steps_per_second;
+        std::vector<unsigned int> surfaces_walls;
+        std::vector<unsigned int> surfaces_inlets;
+        std::vector<unsigned int> surfaces_outlets;
+        std::vector<unsigned int> surfaces_free_slip;
+        double characteristic_length;
     };
 
     /*const SimulationSettings base_sim_settings = {
