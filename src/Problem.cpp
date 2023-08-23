@@ -25,6 +25,8 @@ void NavierStokes::increment_time_step()
 {
   ++current_time_step;
   inlet_velocity.set_time_step(current_time_step);
+  forcing_term.set_time((double)current_time_step / (double)settings.get_time_steps_per_second());
+  initial_solution.set_time((double)current_time_step / (double)settings.get_time_steps_per_second());
 }
 
 inline double NavierStokes::estimate_reynolds_number() const
