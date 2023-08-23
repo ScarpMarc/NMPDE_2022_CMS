@@ -105,20 +105,32 @@ public:
     class InletVelocity : public Function<dim>
     {
     public:
-        InletVelocity(NavierStokes &parent)
-            : Function<dim>(dim + 1), parent(parent)
+        InletVelocity(const std::array<double, 3> &inlet_velocity_start, const std::array<double, 3> &inlet_velocity_end, const unsigned int &time_steps_pre_ramp, const unsigned int &time_steps_ramp, const unsigned int &time_steps_per_second)
+            : Function<dim>(dim + 1), velocity_start(inlet_velocity_start.begin(), inlet_velocity_start.end()), 
+            velocity_end(inlet_velocity_end.begin(), inlet_velocity_end.end()), time_steps_pre_ramp(time_steps_pre_ramp), time_steps_ramp(time_steps_ramp), time_steps_per_second(time_steps_per_second)
         {
         }
+
+        /*
+        if (current_time_step < settings.get_time_steps_pre_ramp())
+    return settings.get_inlet_velocity_start()[component];
+  else if (current_time_step >= settings.get_time_steps_pre_ramp() + settings.get_time_steps_ramp())
+    return settings.get_inlet_velocity_end()[component];
+  else
+    return settings.get_inlet_velocity_start()[component] +
+           (((double)current_time_step) / (double)settings.get_time_steps_per_second()) *
+               (settings.get_inlet_velocity_end()[component] - settings.get_inlet_velocity_start()[component]);
+
+
+        */
 
         virtual void
         vector_value(const Point<dim> & /*p*/, Vector<double> &values) const override
         {
             // values[0] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
             values[3] = 0.0; // Unused component
-            for (unsigned int i = 0; i < dim; ++i)
-            {
-                values[i] = parent.get_current_inlet_velocity(i);
-            }
+            for(unsigned int i = 0; i < dim; ++i)
+                values[i] = velocity_start[i] + (velocity_end[i] - velocity_start[i]) * get_time();
         }
 
         virtual double
@@ -129,12 +141,44 @@ public:
                 return 0.0;
             else
             {
-                return parent.get_current_inlet_velocity(component);
+                return velocity_start[component] + (velocity_end[component] - velocity_start[component]) * get_time();
             }
         }
 
+        /**
+         * @brief Set the time step.
+         * @details The velocity is kept at the initial value before the ramp, so we set the time to 0. Then it increases linearly during the ramp, and is set to the final value after the ramp. This is done so that the value and vector_value functions need to just return (v_end - v_start) at time t, without any if statements.
+         */
+        void set_time_step(const unsigned long &time_step)
+        {
+            if (time_step < time_steps_pre_ramp)
+                set_time(0.0);
+            else if (time_step >= time_steps_pre_ramp + time_steps_ramp)
+                set_time((double)(time_steps_pre_ramp + time_steps_ramp) / (double)time_steps_per_second);
+            else
+                set_time((double)time_step / (double)time_steps_per_second);
+        }
+
     protected:
-        const NavierStokes &parent;
+        // const NavierStokes &parent;
+
+        /*inline constexpr double get_cur_velocity_value(const unsigned int component = 0)
+        {
+            if (get_time() < ((double)time_steps_pre_ramp / (double)time_steps_per_second))
+                return inlet_velocity_start[component];
+            else if (get_time() >= (((double)time_steps_pre_ramp + (double)time_steps_ramp) / (double)time_steps_per_second))
+                return inlet_velocity_end[component];
+            else
+                return inlet_velocity_start[component] +
+                       get_time() *
+                           (inlet_velocity_end[component] - inlet_velocity_start[component]);
+        }*/
+
+        const Vector<double> velocity_start;
+        const Vector<double> velocity_end;
+        const unsigned int time_steps_pre_ramp;
+        const unsigned int time_steps_ramp;
+        const unsigned int time_steps_per_second;
     };
 
     // Since we're working with block matrices, we need to make our own
@@ -172,13 +216,12 @@ public:
     NavierStokes(ns_sim_settings::SimulationSettings &settings)
         : settings(settings), mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0),
           surfaces_walls(settings.get_surfaces_walls()), surfaces_inlets(settings.get_surfaces_inlets()), surfaces_outlets(settings.get_surfaces_outlets()), surfaces_free_slip(settings.get_surfaces_free_slip()),
-          inlet_velocity(*this), mesh(MPI_COMM_WORLD)
+          inlet_velocity(settings.get_inlet_velocity_start(), settings.get_inlet_velocity_end(), settings.get_time_steps_pre_ramp(), settings.get_time_steps_ramp(), settings.get_time_steps_per_second()), mesh(MPI_COMM_WORLD)
     {
     }
 
     // Setup system.
-    void
-    setup();
+    void setup();
 
     /**
      * @brief Assemble the system matrix and right-hand side.
@@ -226,15 +269,16 @@ public:
      * @brief Outputs the solution to a file, at the current time step.
      * @details Called at the end of each time step.
      */
-    void
-    output() const;
+    void output() const;
 
     void increment_time_step();
 
     double get_current_coeff_nu() const;
 
-    double get_current_inlet_velocity(const unsigned int& component = 0) const;
-    void get_current_inlet_velocity(Vector<double> &output) const;
+    /*
+        double get_current_inlet_velocity(const unsigned int &component = 0) const;
+        void get_current_inlet_velocity(Vector<double> &output) const;
+    */
 
     // enum AssemblyType
     //{
