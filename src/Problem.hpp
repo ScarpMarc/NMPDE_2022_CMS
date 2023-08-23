@@ -154,9 +154,9 @@ public:
             if (time_step < time_steps_pre_ramp)
                 set_time(0.0);
             else if (time_step >= time_steps_pre_ramp + time_steps_ramp)
-                set_time((double)(time_steps_pre_ramp + time_steps_ramp) / (double)time_steps_per_second);
+                set_time((double)(time_steps_ramp) / (double)time_steps_per_second);
             else
-                set_time((double)time_step / (double)time_steps_per_second);
+                set_time((double)(time_step - time_steps_pre_ramp) / (double)time_steps_per_second);
         }
 
     protected:

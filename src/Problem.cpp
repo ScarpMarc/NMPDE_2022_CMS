@@ -615,7 +615,7 @@ void NavierStokes::output() const
                                MPI_COMM_WORLD);
 
   std::vector<XDMFEntry> xdmf_entries({data_out.create_xdmf_entry(
-      data_filter, output_file_name + ".h5", 0, MPI_COMM_WORLD)});
+      data_filter, output_file_name + ".h5", (double)current_time_step / (double)settings.get_time_steps_per_second(), MPI_COMM_WORLD)});
   data_out.write_xdmf_file(xdmf_entries,
                            output_file_name + ".xdmf",
                            MPI_COMM_WORLD);
