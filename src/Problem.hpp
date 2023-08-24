@@ -106,8 +106,8 @@ public:
     {
     public:
         InletVelocity(const std::array<double, 3> &inlet_velocity_start, const std::array<double, 3> &inlet_velocity_end, const unsigned int &time_steps_pre_ramp, const unsigned int &time_steps_ramp, const unsigned int &time_steps_per_second)
-            : Function<dim>(dim + 1), velocity_start(inlet_velocity_start.begin(), inlet_velocity_start.end()), 
-            velocity_end(inlet_velocity_end.begin(), inlet_velocity_end.end()), time_steps_pre_ramp(time_steps_pre_ramp), time_steps_ramp(time_steps_ramp), time_steps_per_second(time_steps_per_second)
+            : Function<dim>(dim + 1), velocity_start(inlet_velocity_start.begin(), inlet_velocity_start.end()),
+              velocity_end(inlet_velocity_end.begin(), inlet_velocity_end.end()), time_steps_pre_ramp(time_steps_pre_ramp), time_steps_ramp(time_steps_ramp), time_steps_per_second(time_steps_per_second)
         {
         }
 
@@ -129,7 +129,7 @@ public:
         {
             // values[0] = -alpha * p[1] * (2.0 - p[1]) * (1.0 - p[2]) * (2.0 - p[2]);
             values[3] = 0.0; // Unused component
-            for(unsigned int i = 0; i < dim; ++i)
+            for (unsigned int i = 0; i < dim; ++i)
                 values[i] = velocity_start[i] + (velocity_end[i] - velocity_start[i]) * get_time();
         }
 
@@ -226,8 +226,7 @@ public:
     /**
      * @brief Assemble the system matrix and right-hand side.
      */
-    void
-        assemble_system(/*const AssemblyType &type*/);
+    void assemble_system();
 
     // Solve Newton step.
     // void

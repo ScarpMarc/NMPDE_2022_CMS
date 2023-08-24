@@ -25,8 +25,8 @@ void NavierStokes::increment_time_step()
 {
   ++current_time_step;
   inlet_velocity.set_time_step(current_time_step);
-  forcing_term.set_time((double)current_time_step / (double)settings.get_time_steps_per_second());
-  initial_solution.set_time((double)current_time_step / (double)settings.get_time_steps_per_second());
+  // forcing_term.set_time((double)current_time_step / (double)settings.get_time_steps_per_second());
+  // initial_solution.set_time((double)current_time_step / (double)settings.get_time_steps_per_second());
 }
 
 inline double NavierStokes::estimate_reynolds_number() const
@@ -208,6 +208,11 @@ void NavierStokes::setup()
     solution_old = solution;
   }
 }
+
+/*void NavierStokes::assemble_initial_step()
+{
+
+}*/
 
 void NavierStokes::assemble_system(/*const AssemblyType &type*/)
 {
@@ -465,8 +470,6 @@ void NavierStokes::solve()
   pcout << "===============================================" << std::endl;
 
   inlet_velocity.set_time_step(current_time_step);
-  forcing_term.set_time(0.0);
-  initial_solution.set_time(0.0);
 
   double cur_reynolds_number = estimate_reynolds_number();
   pcout << "Reynold's number estimation at the start: Re = " << cur_reynolds_number << " (" << (cur_reynolds_number <= max_reynolds_number_before_continuation ? "<=" : ">")
@@ -489,13 +492,15 @@ void NavierStokes::solve()
     solution = solution_owned;
 
     // Output the initial solution.
-    // output(0, 0.0);
+    output();
   }
 
   pcout << "===============================================" << std::endl;
 
-  for (unsigned int t = 0; t < settings.get_time_steps_pre_ramp() + settings.get_time_steps_ramp() + settings.get_time_steps_post_ramp(); ++t)
+  for (unsigned int t = 0; t <= settings.get_time_steps_pre_ramp() + settings.get_time_steps_ramp() + settings.get_time_steps_post_ramp(); ++t)
   {
+    increment_time_step();
+
     pcout << "Current time: " << (double)current_time_step / (double)settings.get_time_steps_per_second()
           << " (time step: " << current_time_step << "/"
           << settings.get_time_steps_pre_ramp() + settings.get_time_steps_ramp() + settings.get_time_steps_post_ramp() << ")" << std::endl;
@@ -517,12 +522,21 @@ void NavierStokes::solve()
           << cur_velocity[1] << ", " << cur_velocity[2] << std::endl;
     pcout << "\tThis time step's Reynolds number: " << estimate_reynolds_number() << std::endl;
 
+    // Shouldn't be needed
     solution_old = solution;
 
+    /*if (is_initial_step)
+    {
+      assemble_initial_step();
+      is_initial_step = false;
+    }
+    else
+    {*/
     assemble_system();
+    //}
+
     solve_time_step();
     output();
-    increment_time_step();
   }
 }
 

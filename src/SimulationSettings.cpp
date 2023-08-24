@@ -271,14 +271,22 @@ namespace ns_sim_settings
             temp.str(prm.get("inlet_velocity_start"));
 
             for (unsigned int i = 0; i < 3; ++i)
+            {
                 temp >> inlet_velocity_start[i];
+                if (inlet_velocity_start[i] < 1e-50)
+                    inlet_velocity_start[i] = 0.0;
+            }
 
             temp.clear();
 
             temp.str(prm.get("inlet_velocity_end"));
 
             for (unsigned int i = 0; i < 3; ++i)
+            {
                 temp >> inlet_velocity_end[i];
+                if (inlet_velocity_end[i] < 1e-50)
+                    inlet_velocity_end[i] = 0.0;
+            }
 
             temp.clear();
         }
@@ -386,7 +394,7 @@ namespace ns_sim_settings
                 warning_issued = true;
             }
 
-            if(warning_issued)
+            if (warning_issued)
             {
                 std::cout << "Please check whether the input syntax is correct." << std::endl;
             }

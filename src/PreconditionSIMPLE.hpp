@@ -1,7 +1,6 @@
 #ifndef PRECONDITIONER_SIMPLE_HPP
 #define PRECONDITIONER_SIMPLE_HPP
 
-
 #include <deal.II/base/quadrature_lib.h>
 
 #include <deal.II/distributed/fully_distributed_tria.h>
@@ -68,13 +67,31 @@ public:
     vmult(TrilinosWrappers::MPI::BlockVector &dst,
           const TrilinosWrappers::MPI::BlockVector &src) const
     {
+        /*
+        int mpi_ID;
+        int mpi_size;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_ID);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
+        double src0_norm = src.block(0).l2_norm();
+        double src1_norm = src.block(1).l2_norm();
+        double dst0_norm = dst.block(0).l2_norm();
+        double dst1_norm = dst.block(1).l2_norm();
+        if (mpi_ID == 0)
+        {
+            std::cout << "src.block(0).size() = " << src.block(0).size() << std::endl;
+            std::cout << "src.block(1).size() = " << src.block(1).size() << std::endl;
+            std::cout << "src.block(0) norm = " << src0_norm << std::endl;
+            std::cout << "src.block(1) norm = " << src1_norm << std::endl;
+            std::cout << "dst.block(0) norm = " << dst0_norm << std::endl;
+            std::cout << "dst.block(1) norm = " << dst1_norm << std::endl;
+        }
+        */
         // Effect of P1
         {
-
             // dst_0 = F^-1 * src_0
             SolverControl solver_control_F(1000,
-                                           std::max(1e-2 * src.block(1).l2_norm(), 1e-8));
+                                           1e-2 * src.block(1).l2_norm());
             SolverGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_F(solver_control_F);
             solver_gmres_F.solve(*F,
                                  dst.block(0),
@@ -90,7 +107,7 @@ public:
 
             // 1. Solve S * dst_1 = tmp
 
-            SolverControl solver_control_S(1000, std::max(1e-2 * src.block(1).l2_norm(), 1e-8));
+            SolverControl solver_control_S(1000, 1e-2 * src.block(1).l2_norm());
             SolverFGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_S(solver_control_S);
             solver_gmres_S.solve(S,
                                  dst.block(1),
