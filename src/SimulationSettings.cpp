@@ -129,11 +129,11 @@ namespace ns_sim_settings
         prm.enter_subsection("Inlet velocity");
         {
             prm.declare_entry("inlet_velocity_start",
-                              "0.0, 0.0, 0.0",
+                              "0.0,0.0,0.0",
                               Patterns::List(Patterns::Double(Patterns::Double::min_double_value), 3, 3),
                               " Inlet velocity components at time 0 [m/s]. ");
             prm.declare_entry("inlet_velocity_end",
-                              "0.0, 1.0, 0.0",
+                              "0.0,1.0,0.0",
                               Patterns::List(Patterns::Double(Patterns::Double::min_double_value), 3, 3),
                               " Inlet velocity components at end time [m/s]. ");
         }
@@ -201,7 +201,7 @@ namespace ns_sim_settings
         prm.enter_subsection("Boundary conditions");
         {
             prm.declare_entry("surfaces_walls",
-                              "1, 5",
+                              "1,5",
                               Patterns::List(Patterns::Integer(0)),
                               " Wall surfaces indices ");
             prm.declare_entry("surfaces_inlets",
@@ -267,14 +267,15 @@ namespace ns_sim_settings
         prm.enter_subsection("Inlet velocity");
         {
             std::istringstream temp;
+            std::string buffer;
 
             temp.str(prm.get("inlet_velocity_start"));
 
             for (unsigned int i = 0; i < 3; ++i)
             {
-                temp >> inlet_velocity_start[i];
-                if (inlet_velocity_start[i] < 1e-50)
-                    inlet_velocity_start[i] = 0.0;
+                std::getline(temp, buffer, ',');
+                inlet_velocity_start[i] = std::stod(buffer);
+                buffer.clear();
             }
 
             temp.clear();
@@ -283,12 +284,10 @@ namespace ns_sim_settings
 
             for (unsigned int i = 0; i < 3; ++i)
             {
-                temp >> inlet_velocity_end[i];
-                if (inlet_velocity_end[i] < 1e-50)
-                    inlet_velocity_end[i] = 0.0;
+                std::getline(temp, buffer, ',');
+                inlet_velocity_end[i] = std::stod(buffer);
+                buffer.clear();
             }
-
-            temp.clear();
         }
         prm.leave_subsection();
 
@@ -320,47 +319,49 @@ namespace ns_sim_settings
         prm.enter_subsection("Boundary conditions");
         {
             std::istringstream temp;
-            unsigned int temp_uint;
+            std::string buffer;
 
             temp.str(prm.get("surfaces_walls"));
 
             surfaces_walls.clear();
 
-            while (temp >> temp_uint)
+            while (std::getline(temp, buffer, ','))
             {
-                surfaces_walls.push_back(temp_uint);
+                surfaces_walls.push_back(std::stoul(buffer));
+                buffer.clear();
             }
             temp.clear();
 
             temp.str(prm.get("surfaces_inlets"));
 
             surfaces_inlets.clear();
-            while (temp >> temp_uint)
+            while (std::getline(temp, buffer, ','))
             {
-                surfaces_inlets.push_back(temp_uint);
+                surfaces_inlets.push_back(std::stoul(buffer));
+                buffer.clear();
             }
-
             temp.clear();
 
             temp.str(prm.get("surfaces_outlets"));
 
             surfaces_outlets.clear();
-            while (temp >> temp_uint)
+            while (std::getline(temp, buffer, ','))
             {
-                surfaces_outlets.push_back(temp_uint);
+                surfaces_outlets.push_back(std::stoul(buffer));
+                buffer.clear();
             }
 
             temp.clear();
+            buffer.clear();
 
             temp.str(prm.get("surfaces_free_slip"));
 
             surfaces_free_slip.clear();
-            while (temp >> temp_uint)
+            while (std::getline(temp, buffer, ','))
             {
-                surfaces_free_slip.push_back(temp_uint);
+                surfaces_free_slip.push_back(std::stoul(buffer));
+                buffer.clear();
             }
-
-            temp.clear();
         }
         prm.leave_subsection();
 
