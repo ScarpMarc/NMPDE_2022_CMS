@@ -514,6 +514,8 @@ void NavierStokes::solve()
 
   for (unsigned int t = 0; t <= settings.get_time_steps_pre_ramp() + settings.get_time_steps_ramp() + settings.get_time_steps_post_ramp(); ++t)
   {
+    solution_old = solution;
+
     increment_time_step();
 
     pcout << "Current time: " << (double)current_time_step / (double)settings.get_time_steps_per_second()
@@ -546,8 +548,6 @@ void NavierStokes::solve()
     // Timer for solve called internally to achieve more granularity
     // Output the initial solution.
     solve_time_step();
-
-    solution_old = solution;
 
     {
       TimerOutput::Scope timer_section(timer, "Output_step_" + std::to_string(current_time_step));
