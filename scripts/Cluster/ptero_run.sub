@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -S /bin/bash
 
-#PBS -l nodes=1:ppn=20,walltime=4:00:00 -q gigat
-#PBS -N stokes_ptero_build_cuda_cms
+#PBS -l nodes=1:ppn=20,walltime=8:00:00 -q gigat
+#PBS -N stokes_ptero_cms
 
 source /u/par3/hpc.bashrc
 
