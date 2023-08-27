@@ -43,12 +43,12 @@ Physical Surface("PteroSurface") = {7:ptero_surface_last_face}; // 798 for reduc
 BoundingBox;
 bb() = BoundingBox Volume {1};
 
-xmin = bb(0) * 1.1;//2;
-ymin = bb(1) * 1.1; // 1.5;
-zmin = bb(2) * 3;//12;
+xmin = bb(0) * 1.3; //1.1;//2;
+ymin = bb(1) * 1.5; //1.1; // 1.5;
+zmin = bb(2) * 20; //3;//12;
 xmax = bb(3);
-ymax = bb(4) * 2;// 7;
-zmax = bb(5) * 1.5;//3.5;
+ymax = bb(4) * 7; //2;// 7;
+zmax = bb(5) * 2;//3.5;
 
 Box(2) = {xmin,ymin,zmin, xmax-xmin,ymax-ymin,zmax-zmin};
 
@@ -77,13 +77,13 @@ Mesh.CharacteristicLengthFromCurvature = 1;
 Mesh.MinimumElementsPerTwoPi = 6;
 Field[1] = Distance;
 Field[1].SurfacesList = {7:ptero_surface_last_face};
-Field[1].Sampling = .2;
+Field[1].Sampling = 100;
 Field[2] = Threshold;
 Field[2].InField = 1;
-Field[2].SizeMin = sampling_rate/3;
-Field[2].SizeMax = sampling_rate/1;
-Field[2].DistMin = .1;
-Field[2].DistMax = .5;
+Field[2].SizeMin = sampling_rate/2.0;
+Field[2].SizeMax = sampling_rate/1.2;
+Field[2].DistMin = .2;
+Field[2].DistMax = 1;
 Field[3] = MathEval;
 Field[3].F = Sprintf("F1^3 + %g", sampling_rate);
 Field[7] = Min;
@@ -111,7 +111,7 @@ Optimize the current mesh with the given algorithm (currently "Gmsh" for default
 */
 OptimizeMesh "Gmsh";
 
-Save "ptero.msh";
+Save "Ptero_full_bigger.msh";
 
 //Merge "half_ptero_reducedx2.stl" ;//+
 Coherence;
