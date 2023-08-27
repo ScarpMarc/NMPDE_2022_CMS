@@ -7,15 +7,15 @@
         "surfaces_5ffree_5fslip": "4",
         "surfaces_5finlets": "2",
         "surfaces_5foutlets": "3",
-        "surfaces_5fwalls": "1, 5"
+        "surfaces_5fwalls": "1,5"
     },
     "Finite_2delement_20settings": {
         "degree_5fpressure": "1",
         "degree_5fvelocity": "2"
     },
     "Inlet_20velocity": {
-        "inlet_5fvelocity_5fend": "0.0, 1.0, 0.0",
-        "inlet_5fvelocity_5fstart": "0.0, 0.0, 0.0"
+        "inlet_5fvelocity_5fend": "0.0,10.0,0.0",
+        "inlet_5fvelocity_5fstart": "0.0,0.0,0.0"
     },
     "Physical_20coefficients": {
         "coeff_5frho": "1.204",
