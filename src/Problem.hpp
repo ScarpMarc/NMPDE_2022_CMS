@@ -33,6 +33,8 @@
 #include "SimulationSettings.hpp"
 #include "PreconditionSIMPLE.hpp"
 
+#include <deal.II/base/timer.h>
+
 #include <fstream>
 #include <iostream>
 
@@ -215,6 +217,7 @@ public:
     // Constructor.
     NavierStokes(ns_sim_settings::SimulationSettings &settings)
         : settings(settings), mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0),
+        timer(pcout, TimerOutput::never , TimerOutput::wall_times),
           surfaces_walls(settings.get_surfaces_walls()), surfaces_inlets(settings.get_surfaces_inlets()), surfaces_outlets(settings.get_surfaces_outlets()), surfaces_free_slip(settings.get_surfaces_free_slip()),
           inlet_velocity(settings.get_inlet_velocity_start(), settings.get_inlet_velocity_end(), settings.get_time_steps_pre_ramp(), settings.get_time_steps_ramp(), settings.get_time_steps_per_second()), mesh(MPI_COMM_WORLD)
     {
@@ -285,6 +288,8 @@ public:
     //     NAVIER_STOKES
     // };
 
+    void finalize() const;
+
 protected:
     // MPI parallel. /////////////////////////////////////////////////////////////
 
@@ -300,6 +305,8 @@ protected:
 
     // Parallel output stream.
     ConditionalOStream pcout;
+
+    dealii::TimerOutput timer;
 
     // Problem definition. ///////////////////////////////////////////////////////
 
@@ -392,6 +399,10 @@ protected:
 
     // System solution at previous time step.
     TrilinosWrappers::MPI::BlockVector solution_old;
+
+    //////////// Internal ////////////
+
+    void setup_internal();
 };
 
 #endif

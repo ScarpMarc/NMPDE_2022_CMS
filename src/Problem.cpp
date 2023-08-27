@@ -1,5 +1,4 @@
 #include "Problem.hpp"
-#include <deal.II/base/timer.h>
 #include <algorithm>
 
 double NavierStokes::get_current_coeff_nu() const
@@ -37,9 +36,19 @@ inline double NavierStokes::estimate_reynolds_number() const
   return (settings.get_coeff_rho() * cur_velocity.l2_norm() * settings.get_characteristic_length()) / get_current_coeff_nu();
 }
 
+void NavierStokes::finalize() const
+{
+  timer.print_wall_time_statistics(MPI_COMM_WORLD, .9);
+}
+
 void NavierStokes::setup()
 {
-  // Create the mesh.
+  TimerOutput::Scope timer_section(timer, "Setup");
+  setup_internal();
+}
+
+void NavierStokes::setup_internal()
+{
   {
     pcout << "Initializing the mesh" << std::endl;
 
@@ -454,15 +463,26 @@ void NavierStokes::solve_time_step()
 
   SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
-  // Custom Defined Preconditioner
   PreconditionSIMPLE preconditioner;
-  preconditioner.initialize(settings.get_preconditioner_coeff_alpha(), jacobian_matrix, D_inv.block(0));
 
-  solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
+  {
+    TimerOutput::Scope timer_section(timer, "Preconditioner initialisation - step " + std::to_string(current_time_step));
+    // Custom Defined Preconditioner
+    preconditioner.initialize(settings.get_preconditioner_coeff_alpha(), jacobian_matrix, D_inv.block(0));
+  }
+
+  {
+    TimerOutput::Scope timer_section(timer, "Solving - step " + std::to_string(current_time_step));
+    solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
+  }
+
   pcout << "  " << solver_control.last_step() << " GMRES iterations"
         << std::endl;
 
-  solution = solution_owned;
+  {
+    TimerOutput::Scope timer_section(timer, "Solution transfer - step " + std::to_string(current_time_step));
+    solution = solution_owned;
+  }
 }
 
 void NavierStokes::solve()
@@ -475,14 +495,8 @@ void NavierStokes::solve()
   pcout << "Reynold's number estimation at the start: Re = " << cur_reynolds_number << " (" << (cur_reynolds_number <= max_reynolds_number_before_continuation ? "<=" : ">")
         << " " << max_reynolds_number_before_continuation << ")" << std::endl;
 
-  if (cur_reynolds_number > max_reynolds_number_before_continuation)
   {
-    // Do continuation method
-    pcout << "Continuation method not implemented yet..." << std::endl;
-  }
-  else
-  {
-    pcout << "No need for the continuation method." << std::endl;
+    TimerOutput::Scope timer_section(timer, "Interpolation of the initial solution");
     // Apply the initial condition.
 
     pcout << "Applying the initial condition" << std::endl;
@@ -490,7 +504,9 @@ void NavierStokes::solve()
     // Here for the initial solution start with the velocity equal to zero.
     VectorTools::interpolate(dof_handler, initial_solution, solution_owned);
     solution = solution_owned;
-
+  }
+  {
+    TimerOutput::Scope timer_section(timer, "Output - step " + std::to_string(current_time_step));
     // Output the initial solution.
     output();
   }
@@ -522,21 +538,21 @@ void NavierStokes::solve()
           << cur_velocity[1] << ", " << cur_velocity[2] << std::endl;
     pcout << "\tThis time step's Reynolds number: " << estimate_reynolds_number() << std::endl;
 
-    // Shouldn't be needed
-    solution_old = solution;
-
-    /*if (is_initial_step)
     {
-      assemble_initial_step();
-      is_initial_step = false;
+      TimerOutput::Scope timer_section(timer, "Assembly - step " + std::to_string(current_time_step));
+      // Output the initial solution.
+      assemble_system();
     }
-    else
-    {*/
-    assemble_system();
-    //}
 
+    // Timer for solve called internally to achieve more granularity
+    // Output the initial solution.
     solve_time_step();
-    output();
+
+    {
+      TimerOutput::Scope timer_section(timer, "Output - step " + std::to_string(current_time_step));
+      // Output the initial solution.
+      output();
+    }
   }
 }
 
@@ -588,7 +604,7 @@ void NavierStokes::output() const
 {
   pcout << "===============================================" << std::endl;
 
-  dealii::Timer output_timer(MPI_COMM_WORLD, true);
+  // Wdealii::Timer output_timer(MPI_COMM_WORLD, true);
 
   DataOut<dim> data_out;
 
@@ -636,15 +652,13 @@ void NavierStokes::output() const
                            output_file_name + ".xdmf",
                            MPI_COMM_WORLD);
 
-  output_timer.stop();
-
   pcout << "Output written to " << output_file_name << std::endl;
   pcout << "===============================================" << std::endl;
-  if (mpi_rank == 0)
+  /*if (mpi_rank == 0)
   {
     std::cout.precision(5);
     std::cout.setf(std::ios::fixed, std::ios::floatfield);
     pcout << "Output time: " << output_timer.wall_time() << "s" << std::endl;
     pcout << "===============================================" << std::endl;
-  }
+  }*/
 }
