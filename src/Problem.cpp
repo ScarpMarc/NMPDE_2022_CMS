@@ -466,13 +466,13 @@ void NavierStokes::solve_time_step()
   PreconditionSIMPLE preconditioner;
 
   {
-    TimerOutput::Scope timer_section(timer, "Preconditioner initialisation - step " + std::to_string(current_time_step));
+    TimerOutput::Scope timer_section(timer, "Preconditioner_initialisation_step_" + std::to_string(current_time_step));
     // Custom Defined Preconditioner
     preconditioner.initialize(settings.get_preconditioner_coeff_alpha(), jacobian_matrix, D_inv.block(0));
   }
 
   {
-    TimerOutput::Scope timer_section(timer, "Solving - step " + std::to_string(current_time_step));
+    TimerOutput::Scope timer_section(timer, "Solving_step_" + std::to_string(current_time_step));
     solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
   }
 
@@ -480,7 +480,7 @@ void NavierStokes::solve_time_step()
         << std::endl;
 
   {
-    TimerOutput::Scope timer_section(timer, "Solution transfer - step " + std::to_string(current_time_step));
+    TimerOutput::Scope timer_section(timer, "Solution_transfer_step_" + std::to_string(current_time_step));
     solution = solution_owned;
   }
 }
@@ -496,7 +496,7 @@ void NavierStokes::solve()
         << " " << max_reynolds_number_before_continuation << ")" << std::endl;
 
   {
-    TimerOutput::Scope timer_section(timer, "Interpolation of the initial solution");
+    TimerOutput::Scope timer_section(timer, "Interpolation_of_the_initial_solution");
     // Apply the initial condition.
 
     pcout << "Applying the initial condition" << std::endl;
@@ -506,7 +506,7 @@ void NavierStokes::solve()
     solution = solution_owned;
   }
   {
-    TimerOutput::Scope timer_section(timer, "Output - step " + std::to_string(current_time_step));
+    TimerOutput::Scope timer_section(timer, "Output_step_" + std::to_string(current_time_step));
     // Output the initial solution.
     output();
   }
@@ -539,7 +539,7 @@ void NavierStokes::solve()
     pcout << "\tThis time step's Reynolds number: " << estimate_reynolds_number() << std::endl;
 
     {
-      TimerOutput::Scope timer_section(timer, "Assembly - step " + std::to_string(current_time_step));
+      TimerOutput::Scope timer_section(timer, "Assembly_step_" + std::to_string(current_time_step));
       // Output the initial solution.
       assemble_system();
     }
@@ -549,7 +549,7 @@ void NavierStokes::solve()
     solve_time_step();
 
     {
-      TimerOutput::Scope timer_section(timer, "Output - step " + std::to_string(current_time_step));
+      TimerOutput::Scope timer_section(timer, "Output_step_" + std::to_string(current_time_step));
       // Output the initial solution.
       output();
     }
