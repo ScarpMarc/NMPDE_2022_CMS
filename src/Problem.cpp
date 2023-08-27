@@ -479,10 +479,9 @@ void NavierStokes::solve_time_step()
   pcout << "  " << solver_control.last_step() << " GMRES iterations"
         << std::endl;
 
-  {
-    TimerOutput::Scope timer_section(timer, "Solution_transfer_step_" + std::to_string(current_time_step));
-    solution = solution_owned;
-  }
+  
+  solution = solution_owned;
+  
 }
 
 void NavierStokes::solve()
@@ -547,6 +546,8 @@ void NavierStokes::solve()
     // Timer for solve called internally to achieve more granularity
     // Output the initial solution.
     solve_time_step();
+
+    solution_old = solution;
 
     {
       TimerOutput::Scope timer_section(timer, "Output_step_" + std::to_string(current_time_step));
