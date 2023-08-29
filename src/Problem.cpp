@@ -38,7 +38,7 @@ inline double NavierStokes::estimate_reynolds_number() const
 
 void NavierStokes::finalize() const
 {
-  timer.print_wall_time_statistics(MPI_COMM_WORLD, .9);
+  timer.print_wall_time_statistics(MPI_COMM_WORLD);
 }
 
 void NavierStokes::setup()
@@ -466,13 +466,13 @@ void NavierStokes::solve_time_step()
   PreconditionSIMPLE preconditioner;
 
   {
-    TimerOutput::Scope timer_section(timer, "Preconditioner_initialisation_step_" + std::to_string(current_time_step));
+    TimerOutput::Scope timer_section(timer, "Preconditioner_initialisation_step;" + std::to_string(current_time_step));
     // Custom Defined Preconditioner
     preconditioner.initialize(settings.get_preconditioner_coeff_alpha(), jacobian_matrix, D_inv.block(0));
   }
 
   {
-    TimerOutput::Scope timer_section(timer, "Solving_step_" + std::to_string(current_time_step));
+    TimerOutput::Scope timer_section(timer, "Solving_step;" + std::to_string(current_time_step));
     solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
   }
 
@@ -505,7 +505,7 @@ void NavierStokes::solve()
     solution = solution_owned;
   }
   {
-    TimerOutput::Scope timer_section(timer, "Output_step_" + std::to_string(current_time_step));
+    TimerOutput::Scope timer_section(timer, "Output_;" + std::to_string(current_time_step));
     // Output the initial solution.
     output();
   }
@@ -540,7 +540,7 @@ void NavierStokes::solve()
     pcout << "\tThis time step's Reynolds number: " << estimate_reynolds_number() << std::endl;
 
     {
-      TimerOutput::Scope timer_section(timer, "Assembly_step_" + std::to_string(current_time_step));
+      TimerOutput::Scope timer_section(timer, "Assembly_step;" + std::to_string(current_time_step));
       // Output the initial solution.
       assemble_system();
     }
@@ -550,7 +550,7 @@ void NavierStokes::solve()
     solve_time_step();
 
     {
-      TimerOutput::Scope timer_section(timer, "Output_step_" + std::to_string(current_time_step));
+      TimerOutput::Scope timer_section(timer, "Output_step;" + std::to_string(current_time_step));
       // Output the initial solution.
       output();
     }
