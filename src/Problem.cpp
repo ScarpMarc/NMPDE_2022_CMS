@@ -453,7 +453,7 @@ void NavierStokes::assemble_system(/*const AssemblyType &type*/)
                                              boundary_functions,
                                              boundary_values,
                                              ComponentMask(
-                                                 {true, false, true, false}));
+                                                 {false, true, false, false}));
     // Here we implement the free slip condition by masking the omogeneous Dirichelt BC
     // on the y component of the velocity (for the cylinder mesh, it  would be on the x comonent)
     // That is because the velocity should be able to move freely in the y direction on the wall surfaces
