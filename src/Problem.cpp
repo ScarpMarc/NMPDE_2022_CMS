@@ -443,7 +443,11 @@ void NavierStokes::assemble_system(/*const AssemblyType &type*/)
                                              boundary_values,
                                              ComponentMask(
                                                  {true, true, true, false}));
-    // FIXME REMOVEME
+
+    // Here we implement the free slip condition by masking the omogeneous Dirichelt BC
+    // on the y component of the velocity (for the cylinder mesh, it  would be on the x comonent)
+    // That is because the velocity should be able to move freely in the y direction on the wall surfaces
+
     for (const unsigned int &surf : surfaces_free_slip)
     {
       boundary_functions[surf] = &zero_function;
@@ -453,16 +457,8 @@ void NavierStokes::assemble_system(/*const AssemblyType &type*/)
                                              boundary_functions,
                                              boundary_values,
                                              ComponentMask(
-                                                 {false, true, false, false}));
-    // Here we implement the free slip condition by masking the omogeneous Dirichelt BC
-    // on the y component of the velocity (for the cylinder mesh, it  would be on the x comonent)
-    // That is because the velocity should be able to move freely in the y direction on the wall surfaces
-
-    VectorTools::interpolate_boundary_values(dof_handler,
-                                             boundary_functions,
-                                             boundary_values,
-                                             ComponentMask(
-                                                 {true, true, true, false}));
+                                                 {true, false, false, false}));
+    
 
     MatrixTools::apply_boundary_values(
         boundary_values, jacobian_matrix, solution_owned, residual_vector, false);
