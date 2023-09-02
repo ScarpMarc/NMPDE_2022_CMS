@@ -448,6 +448,8 @@ void NavierStokes::assemble_system(/*const AssemblyType &type*/)
     // on the y component of the velocity (for the cylinder mesh, it  would be on the x comonent)
     // That is because the velocity should be able to move freely in the y direction on the wall surfaces
 
+    boundary_functions.clear();
+
     for (const unsigned int &surf : surfaces_free_slip)
     {
       boundary_functions[surf] = &zero_function;
