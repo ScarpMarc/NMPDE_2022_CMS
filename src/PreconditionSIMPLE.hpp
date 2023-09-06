@@ -91,7 +91,7 @@ public:
         {
             // dst_0 = F^-1 * src_0
             SolverControl solver_control_F(5000,
-                                           1e-2 * src.block(1).l2_norm());
+                                           1e-6 * src.block(0).l2_norm());
             SolverGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_F(solver_control_F);
             solver_gmres_F.solve(*F,
                                  dst.block(0),
