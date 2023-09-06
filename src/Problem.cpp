@@ -7,19 +7,6 @@ double NavierStokes::get_current_coeff_nu() const
   return settings.get_coeff_nu();
 }
 
-/*double NavierStokes::get_current_inlet_velocity(const unsigned int &component) const
-{
-
-}
-
-void NavierStokes::get_current_inlet_velocity(Vector<double> &output) const
-{
-  for (unsigned int i = 0; i < dim; ++i)
-  {
-    output[i] = get_current_inlet_velocity(i);
-  }
-}*/
-
 void NavierStokes::increment_time_step()
 {
   ++current_time_step;
