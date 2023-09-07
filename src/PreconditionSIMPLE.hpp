@@ -28,6 +28,9 @@
 #include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/vector_tools.h>
 
+#include <deal.II/base/timer.h>
+
+
 using namespace dealii;
 
 /// The SIMPLE preconditioner.
@@ -35,6 +38,11 @@ using namespace dealii;
 class PreconditionSIMPLE
 {
 public:
+    /*PreconditionSIMPLE(dealii::TimerOutput& parent_timer, unsigned long &current_time_step)
+        : timer(parent_timer), current_time_step(current_time_step)
+    {
+    }*/
+
     // Initialize the preconditioner, given:
     // - the F matrix = M/deltat + A + C(u_n)
     // - the B matrix
@@ -89,9 +97,11 @@ public:
         */
         // Effect of P1
         {
+            
+            //TimerOutput::Scope timer_section(timer, "Preconditioner_effect_P1_step;" + std::to_string(current_time_step));
             // dst_0 = F^-1 * src_0
-            SolverControl solver_control_F(10000,
-                                           1e-6 * src.block(0).l2_norm());
+            ReductionControl solver_control_F(10000,
+                                           1e-6 * src.block(0).l2_norm(),1e-6);
             SolverGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_F(solver_control_F);
             solver_gmres_F.solve(*F,
                                  dst.block(0),
@@ -107,7 +117,7 @@ public:
 
             // 1. Solve S * dst_1 = tmp
 
-            SolverControl solver_control_S(10000, 1e-2 * src.block(1).l2_norm());
+            ReductionControl solver_control_S(10000, 1e-2 * src.block(1).l2_norm(),1e-6);
             SolverFGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_S(solver_control_S);
             solver_gmres_S.solve(S,
                                  dst.block(1),
@@ -120,6 +130,7 @@ public:
 
         // Effect of P2
         {
+            //TimerOutput::Scope timer_section(timer, "Preconditioner_effect_P2_step;" + std::to_string(current_time_step));
 
             // dst_1 = 1/alpha * dst_1
             dst.block(1) *= 1.0 / *alpha;
@@ -164,6 +175,9 @@ protected:
 
     // Temporary vectors.
     mutable TrilinosWrappers::MPI::Vector tmp;
+
+    //dealii::TimerOutput &timer;
+    //unsigned long &current_time_step;
 };
 
 #endif

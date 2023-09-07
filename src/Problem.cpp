@@ -459,11 +459,11 @@ void NavierStokes::solve_time_step()
   pcout << "-----------------------------------------------" << std::endl;
   pcout << "Solving the linear system" << std::endl;
 
-  SolverControl solver_control(settings.get_max_solver_iteration_amt(), settings.get_desired_solver_precision() * residual_vector.l2_norm());
+  SolverControl solver_control(settings.get_max_solver_iteration_amt(), settings.get_desired_solver_precision() * residual_vector.l2_norm(), true,true);
+  solver_control.enable_history_data();
+  SolverFGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
-  SolverGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
-
-  PreconditionSIMPLE preconditioner;
+  PreconditionSIMPLE preconditioner;//(timer, current_time_step);
 
   {
     TimerOutput::Scope timer_section(timer, "Preconditioner_initialisation_step;" + std::to_string(current_time_step));
@@ -476,8 +476,10 @@ void NavierStokes::solve_time_step()
     solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
   }
 
-  pcout << "  " << solver_control.last_step() << " GMRES iterations"
-        << std::endl;
+  pcout << "  " << solver_control.last_step() << " FGMRES iterations" << std::endl << 
+        "History: ";
+        for(const auto& i : solver_control.get_history_data()) pcout << i << ", ";
+       pcout << std::endl;
 
   
   solution = solution_owned;

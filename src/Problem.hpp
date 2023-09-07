@@ -290,6 +290,8 @@ public:
 
     void finalize() const;
 
+    constexpr inline unsigned long get_current_time_step() const { return current_time_step; }
+
 protected:
     // MPI parallel. /////////////////////////////////////////////////////////////
 
