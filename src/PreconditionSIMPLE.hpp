@@ -100,9 +100,9 @@ public:
             
             //TimerOutput::Scope timer_section(timer, "Preconditioner_effect_P1_step;" + std::to_string(current_time_step));
             // dst_0 = F^-1 * src_0
-            ReductionControl solver_control_F(10000,
-                                           1e-6 * src.block(0).l2_norm(),1e-6);
-            SolverGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_F(solver_control_F);
+            ReductionControl solver_control_F(5000,
+                                           1e-6 * src.block(0).l2_norm(),1e-5);
+            SolverFGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_F(solver_control_F);
             solver_gmres_F.solve(*F,
                                  dst.block(0),
                                  src.block(0),
@@ -117,7 +117,7 @@ public:
 
             // 1. Solve S * dst_1 = tmp
 
-            ReductionControl solver_control_S(10000, 1e-2 * src.block(1).l2_norm(),1e-6);
+            ReductionControl solver_control_S(5000, 1e-2 * src.block(1).l2_norm(),1e-5);
             SolverFGMRES<TrilinosWrappers::MPI::Vector> solver_gmres_S(solver_control_S);
             solver_gmres_S.solve(S,
                                  dst.block(1),

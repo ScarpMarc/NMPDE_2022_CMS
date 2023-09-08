@@ -404,6 +404,8 @@ protected:
 
     //////////// Internal ////////////
 
+    std::vector<unsigned int> solver_iterations_per_step;
+
     void setup_internal();
 };
 

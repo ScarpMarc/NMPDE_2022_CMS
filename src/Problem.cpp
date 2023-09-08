@@ -26,6 +26,15 @@ inline double NavierStokes::estimate_reynolds_number() const
 void NavierStokes::finalize() const
 {
   timer.print_wall_time_statistics(MPI_COMM_WORLD);
+  if (mpi_rank == 0)
+  {
+    std::cout << "Solver iterations: ";
+    for (const unsigned int &i : solver_iterations_per_step)
+    {
+      std::cout << i << ",";
+    }
+    std::cout << std::endl;
+  }
 }
 
 void NavierStokes::setup()
@@ -419,7 +428,7 @@ void NavierStokes::assemble_system(/*const AssemblyType &type*/)
                                              ComponentMask(
                                                  {true, true, true, false}));
 
-                                                 // Here we implement the free slip condition by masking the omogeneous Dirichelt BC
+    // Here we implement the free slip condition by masking the omogeneous Dirichelt BC
     // on the y component of the velocity (for the cylinder mesh, it  would be on the x comonent)
     // That is because the velocity should be able to move freely in the y direction on the wall surfaces
 
@@ -463,7 +472,7 @@ void NavierStokes::solve_time_step()
   solver_control.enable_history_data();
   SolverFGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
-  PreconditionSIMPLE preconditioner;//(timer, current_time_step);
+  PreconditionSIMPLE preconditioner; //(timer, current_time_step);
 
   {
     TimerOutput::Scope timer_section(timer, "Preconditioner_initialisation_step;" + std::to_string(current_time_step));
@@ -476,14 +485,16 @@ void NavierStokes::solve_time_step()
     solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
   }
 
-  pcout << "  " << solver_control.last_step() << " FGMRES iterations" << std::endl << 
-        "History: ";
-        for(const auto& i : solver_control.get_history_data()) pcout << i << ", ";
-       pcout << std::endl;
+  pcout << "  " << solver_control.last_step() << " FGMRES iterations" << std::endl
+        << "History: ";
+  if (mpi_rank == 0)
+    solver_iterations_per_step.push_back(solver_control.last_step());
 
-  
+  for (const auto &i : solver_control.get_history_data())
+    pcout << i << ", ";
+  pcout << std::endl;
+
   solution = solution_owned;
-  
 }
 
 void NavierStokes::solve()
