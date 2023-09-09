@@ -8,11 +8,17 @@ ptero_surface_last_face = 7 + face_num_small_mesh;
 
 General.NumThreads = 0;
 Geometry.OCCParallel = 1;
+
+Geometry.OCCFixDegenerated = 1;
+Geometry.OCCFixSmallEdges = 1;
+Geometry.OCCFixSmallFaces = 1;
 Geometry.OCCSewFaces = 1;
+Geometry.OCCMakeSolids = 1;
 
 Merge "ptero_sliced_wing.stp" ;//+
 
-//HealShapes; // Just cause
+HealShapes; // Just cause
+
 /*DefineConstant[
     // Angle between two triangles above which an edge is considered as sharp
     angle = {40, Min 20, Max 120, Step 1,
