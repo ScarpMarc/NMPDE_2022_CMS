@@ -217,7 +217,7 @@ public:
     // Constructor.
     NavierStokes(ns_sim_settings::SimulationSettings &settings)
         : settings(settings), mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)), mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)), pcout(std::cout, mpi_rank == 0),
-        timer(pcout, TimerOutput::every_call_and_summary , TimerOutput::wall_times),
+          timer(pcout, TimerOutput::every_call, TimerOutput::wall_times),
           surfaces_walls(settings.get_surfaces_walls()), surfaces_inlets(settings.get_surfaces_inlets()), surfaces_outlets(settings.get_surfaces_outlets()), surfaces_free_slip(settings.get_surfaces_free_slip()),
           inlet_velocity(settings.get_inlet_velocity_start(), settings.get_inlet_velocity_end(), settings.get_time_steps_pre_ramp(), settings.get_time_steps_ramp(), settings.get_time_steps_per_second()), mesh(MPI_COMM_WORLD)
     {
@@ -407,6 +407,15 @@ protected:
     std::vector<unsigned int> solver_iterations_per_step;
 
     void setup_internal();
+
+    SolverControl::State
+    print_solver_status(
+        const double check_value
+        ) const
+    {
+        pcout << check_value << ", ";
+        return SolverControl::success;
+    }
 };
 
 #endif

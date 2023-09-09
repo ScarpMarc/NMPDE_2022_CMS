@@ -472,7 +472,7 @@ void NavierStokes::solve_time_step()
   solver_control.enable_history_data();
   SolverFGMRES<TrilinosWrappers::MPI::BlockVector> solver(solver_control);
 
-  PreconditionSIMPLE preconditioner; //(timer, current_time_step);
+    PreconditionSIMPLE preconditioner; //(timer, current_time_step);
 
   {
     TimerOutput::Scope timer_section(timer, "Preconditioner_initialisation_step;" + std::to_string(current_time_step));
@@ -482,16 +482,16 @@ void NavierStokes::solve_time_step()
 
   {
     TimerOutput::Scope timer_section(timer, "Solving_step;" + std::to_string(current_time_step));
-    solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
-  }
+        solver.solve(jacobian_matrix, solution_owned, residual_vector, preconditioner);
+}
 
   pcout << "  " << solver_control.last_step() << " FGMRES iterations" << std::endl
         << "History: ";
   if (mpi_rank == 0)
-    solver_iterations_per_step.push_back(solver_control.last_step());
+  solver_iterations_per_step.push_back(solver_control.last_step());
 
   for (const auto &i : solver_control.get_history_data())
-    pcout << i << ", ";
+  pcout << i << ", ";
   pcout << std::endl;
 
   solution = solution_owned;
