@@ -8,11 +8,17 @@ ptero_surface_last_face = 7 + face_num_small_mesh;
 
 General.NumThreads = 0;
 Geometry.OCCParallel = 1;
+
+Geometry.OCCFixDegenerated = 1;
+Geometry.OCCFixSmallEdges = 1;
+Geometry.OCCFixSmallFaces = 1;
 Geometry.OCCSewFaces = 1;
+Geometry.OCCMakeSolids = 1;
 
 Merge "Ptero_half_coarse_new.stp" ;//+
 
-//HealShapes; // Just cause
+HealShapes;
+
 /*DefineConstant[
     // Angle between two triangles above which an edge is considered as sharp
     angle = {40, Min 20, Max 120, Step 1,
@@ -35,8 +41,8 @@ Merge "Ptero_half_coarse_new.stp" ;//+
   CreateGeometry;*/
 
 // Create ptero volume
-Surface Loop(1) = Surface{:};
-Volume(1) = {1};
+//Surface Loop(1) = Surface{:};
+//Volume(1) = {1};
 //Physical Volume("PteroBody") = {1};
 Physical Surface("PteroSurface") = {7:ptero_surface_last_face}; // 798 for reduced mesh
 
@@ -69,10 +75,9 @@ Color Orange {Physical Surface {5};} // Wall
 Color Purple {Physical Surface {4}; } // Slip
 Color Green {Physical Surface {1};} // Ptero
 
-
 // Mesh
 
-sampling_rate = .08;
+sampling_rate = .10;
 Mesh.CharacteristicLengthFromCurvature = 1;
 Mesh.MinimumElementsPerTwoPi = 6;
 Field[1] = Distance;
@@ -80,10 +85,10 @@ Field[1].SurfacesList = {7:ptero_surface_last_face};
 Field[1].Sampling = 100;
 Field[2] = Threshold;
 Field[2].InField = 1;
-Field[2].SizeMin = sampling_rate/2.0;
-Field[2].SizeMax = sampling_rate/1.2;
-Field[2].DistMin = .2;
-Field[2].DistMax = 1;
+Field[2].SizeMin = sampling_rate/3.0;
+Field[2].SizeMax = sampling_rate/2;
+Field[2].DistMin = .1;
+Field[2].DistMax = .5;
 Field[3] = MathEval;
 Field[3].F = Sprintf("F1^3 + %g", sampling_rate);
 Field[7] = Min;
@@ -111,7 +116,7 @@ Optimize the current mesh with the given algorithm (currently "Gmsh" for default
 */
 OptimizeMesh "Gmsh";
 
-Save "Ptero_full_bigger.msh";
+Save "Ptero_full_bigger_new.msh";
 
 //Merge "half_ptero_reducedx2.stl" ;//+
 Coherence;
